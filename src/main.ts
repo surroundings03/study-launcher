@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
+import { getAppData } from './main/store';
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -23,7 +24,10 @@ const createWindow = () => {
   }
 };
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  getAppData();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
