@@ -130,14 +130,23 @@ textarea {
 
 .launch-item div {
   display: flex;
+  flex: 1;
   min-width: 0;
   flex-direction: column;
   gap: 4px;
 }
 
-.launch-item span {
-  overflow-wrap: anywhere;
+.launch-item-target {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: #444444;
+}
+
+.launch-item button {
+  flex: 0 0 auto;
 }
 
 .launch-item small {

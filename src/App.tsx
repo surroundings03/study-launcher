@@ -254,7 +254,12 @@ export default function App() {
                       <strong>
                         [{launchItem.order}] {launchItem.title}
                       </strong>
-                      <span>{launchItem.target}</span>
+                      <span
+                        className="launch-item-target"
+                        title={launchItem.target}
+                      >
+                        {launchItem.target}
+                      </span>
                       <small>{launchItem.enabled ? '已启用' : '已禁用'}</small>
                     </div>
                     <button
