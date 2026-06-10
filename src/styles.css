@@ -10,6 +10,7 @@ body {
 
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
@@ -39,26 +40,30 @@ textarea {
   font-weight: 600;
 }
 
-.workflow-form {
+.workflow-form,
+.launch-item-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.workflow-form label {
+.workflow-form label,
+.launch-item-form label {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
 .workflow-form input,
-.workflow-form textarea {
+.workflow-form textarea,
+.launch-item-form input {
   border: 1px solid #cccccc;
   border-radius: 4px;
   padding: 8px;
 }
 
 .workflow-form button,
+.launch-item-form button,
 .workflow-detail button,
 .workflow-item {
   border: 1px solid #cccccc;
@@ -94,6 +99,54 @@ textarea {
 .workflow-detail h2 {
   margin-bottom: 8px;
   font-size: 22px;
+}
+
+.workflow-detail h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.launch-item-form,
+.launch-item-list {
+  width: min(100%, 640px);
+}
+
+.launch-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.launch-item {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 1px solid #dddddd;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.launch-item div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.launch-item span {
+  overflow-wrap: anywhere;
+  color: #444444;
+}
+
+.launch-item small {
+  color: #666666;
+}
+
+.launch-item button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .error-message {

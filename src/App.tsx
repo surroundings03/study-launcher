@@ -1,6 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import type { Workflow } from './shared/types';
+import type { LaunchItem, Workflow } from './shared/types';
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+const sortLaunchItemsByOrder = (items: LaunchItem[]): LaunchItem[] =>
+  [...items].sort((firstItem, secondItem) => {
+    if (firstItem.order !== secondItem.order) {
+      return firstItem.order - secondItem.order;
+    }
+
+    return firstItem.createdAt.localeCompare(secondItem.createdAt);
+  });
 
 export default function App() {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
@@ -9,12 +21,24 @@ export default function App() {
   );
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [urlTitle, setUrlTitle] = useState('');
+  const [urlTarget, setUrlTarget] = useState('');
   const [error, setError] = useState('');
 
   const selectedWorkflow = useMemo(
     () =>
       workflows.find((workflow) => workflow.id === selectedWorkflowId) ?? null,
     [selectedWorkflowId, workflows]
+  );
+
+  const urlLaunchItems = useMemo(
+    () =>
+      selectedWorkflow
+        ? sortLaunchItemsByOrder(
+            selectedWorkflow.items.filter((item) => item.type === 'url')
+          )
+        : [],
+    [selectedWorkflow]
   );
 
   useEffect(() => {
@@ -25,7 +49,7 @@ export default function App() {
         setSelectedWorkflowId(storedWorkflows[0]?.id ?? null);
       })
       .catch((requestError) => {
-        setError(requestError.message ?? '读取工作流失败');
+        setError(getErrorMessage(requestError) || '读取工作流失败');
       });
   }, []);
 
@@ -51,7 +75,7 @@ export default function App() {
       setDescription('');
       setError('');
     } catch (requestError) {
-      setError((requestError as Error).message ?? '创建工作流失败');
+      setError(getErrorMessage(requestError) || '创建工作流失败');
     }
   };
 
@@ -77,7 +101,69 @@ export default function App() {
       setSelectedWorkflowId(nextWorkflows[0]?.id ?? null);
       setError('');
     } catch (requestError) {
-      setError((requestError as Error).message ?? '删除工作流失败');
+      setError(getErrorMessage(requestError) || '删除工作流失败');
+    }
+  };
+
+  const handleAddUrlLaunchItem = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (!selectedWorkflow) {
+      setError('请先选择一个工作流');
+      return;
+    }
+
+    const trimmedTitle = urlTitle.trim();
+    const trimmedTarget = urlTarget.trim();
+
+    if (!trimmedTitle) {
+      setError('标题不能为空');
+      return;
+    }
+
+    if (!trimmedTarget) {
+      setError('URL 不能为空');
+      return;
+    }
+
+    try {
+      const updatedWorkflow = await window.studyLauncher.addUrlLaunchItem(
+        selectedWorkflow.id,
+        {
+          title: trimmedTitle,
+          target: trimmedTarget
+        }
+      );
+
+      setWorkflows((currentWorkflows) =>
+        currentWorkflows.map((workflow) =>
+          workflow.id === updatedWorkflow.id ? updatedWorkflow : workflow
+        )
+      );
+      setUrlTitle('');
+      setUrlTarget('');
+      setError('');
+    } catch (requestError) {
+      setError(getErrorMessage(requestError) || '添加 URL 启动项失败');
+    }
+  };
+
+  const handleLaunchUrlLaunchItem = async (launchItem: LaunchItem) => {
+    if (!selectedWorkflow) {
+      setError('请先选择一个工作流');
+      return;
+    }
+
+    try {
+      await window.studyLauncher.launchUrlLaunchItem(
+        selectedWorkflow.id,
+        launchItem.id
+      );
+      setError('');
+    } catch (requestError) {
+      setError(getErrorMessage(requestError) || '打开 URL 失败');
     }
   };
 
@@ -136,6 +222,54 @@ export default function App() {
             <button type="button" onClick={handleDeleteWorkflow}>
               删除当前工作流
             </button>
+            <form
+              className="launch-item-form"
+              onSubmit={handleAddUrlLaunchItem}
+            >
+              <h3>URL 启动项</h3>
+              <label>
+                标题
+                <input
+                  value={urlTitle}
+                  onChange={(event) => setUrlTitle(event.target.value)}
+                  placeholder="例如：ChatGPT"
+                />
+              </label>
+              <label>
+                URL
+                <input
+                  value={urlTarget}
+                  onChange={(event) => setUrlTarget(event.target.value)}
+                  placeholder="https://chat.openai.com/"
+                />
+              </label>
+              <button type="submit">添加 URL</button>
+            </form>
+            <div className="launch-item-list">
+              <h3>启动项列表</h3>
+              {urlLaunchItems.length > 0 ? (
+                urlLaunchItems.map((launchItem) => (
+                  <div className="launch-item" key={launchItem.id}>
+                    <div>
+                      <strong>
+                        [{launchItem.order}] {launchItem.title}
+                      </strong>
+                      <span>{launchItem.target}</span>
+                      <small>{launchItem.enabled ? '已启用' : '已禁用'}</small>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!launchItem.enabled}
+                      onClick={() => handleLaunchUrlLaunchItem(launchItem)}
+                    >
+                      启动
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p>当前工作流暂无 URL 启动项</p>
+              )}
+            </div>
           </>
         ) : (
           <p>暂无工作流，请先创建一个</p>

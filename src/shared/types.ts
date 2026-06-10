@@ -6,6 +6,15 @@ export type LaunchItem = {
   type: LaunchItemType;
   target: string;
   enabled: boolean;
+  /**
+   * Launch order within the current workflow.
+   *
+   * Lower values come first. UI lists should display launch items in ascending
+   * order, and resource launching should execute them in ascending order too.
+   * New launch items should be appended to the end of the workflow's item list.
+   * After deletion or reordering, future sorting logic should normalize order
+   * values to avoid duplicates or gaps.
+   */
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -52,4 +61,9 @@ export type AppData = {
 export type CreateWorkflowInput = {
   name: string;
   description?: string;
+};
+
+export type CreateUrlLaunchItemInput = {
+  title: string;
+  target: string;
 };

@@ -1,4 +1,8 @@
-import type { CreateWorkflowInput, Workflow } from './types';
+import type {
+  CreateUrlLaunchItemInput,
+  CreateWorkflowInput,
+  Workflow
+} from './types';
 
 declare global {
   interface Window {
@@ -6,6 +10,14 @@ declare global {
       getWorkflows(): Promise<Workflow[]>;
       createWorkflow(input: CreateWorkflowInput): Promise<Workflow>;
       deleteWorkflow(workflowId: string): Promise<Workflow[]>;
+      addUrlLaunchItem(
+        workflowId: string,
+        input: CreateUrlLaunchItemInput
+      ): Promise<Workflow>;
+      launchUrlLaunchItem(
+        workflowId: string,
+        launchItemId: string
+      ): Promise<void>;
     };
   }
 }
