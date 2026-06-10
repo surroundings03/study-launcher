@@ -8,8 +8,94 @@ body {
     sans-serif;
 }
 
-h1 {
-  margin: 32px;
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-right: 1px solid #dddddd;
+  padding: 24px;
+}
+
+.sidebar h1 {
   font-size: 24px;
   font-weight: 600;
+}
+
+.workflow-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workflow-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workflow-form input,
+.workflow-form textarea {
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.workflow-form button,
+.workflow-detail button,
+.workflow-item {
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.workflow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workflow-item {
+  text-align: left;
+}
+
+.workflow-item.selected {
+  border-color: #333333;
+  font-weight: 600;
+}
+
+.workflow-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 32px;
+}
+
+.workflow-detail h2 {
+  margin-bottom: 8px;
+  font-size: 22px;
+}
+
+.error-message {
+  color: #b00020;
 }

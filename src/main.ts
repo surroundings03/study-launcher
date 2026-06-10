@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
+import { registerWorkflowIpcHandlers } from './main/ipc';
 import { getAppData } from './main/store';
 
 if (require('electron-squirrel-startup')) {
@@ -26,6 +27,7 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   getAppData();
+  registerWorkflowIpcHandlers();
   createWindow();
 });
 

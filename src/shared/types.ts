@@ -48,3 +48,8 @@ export type AppData = {
   workflows: Workflow[];
   activeSession: ActiveSession;
 };
+
+export type CreateWorkflowInput = {
+  name: string;
+  description?: string;
+};
