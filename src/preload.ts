@@ -13,5 +13,7 @@ contextBridge.exposeInMainWorld('studyLauncher', {
   addUrlLaunchItem: (workflowId: string, input: CreateUrlLaunchItemInput) =>
     ipcRenderer.invoke('launch-items:add-url', workflowId, input),
   launchUrlLaunchItem: (workflowId: string, launchItemId: string) =>
-    ipcRenderer.invoke('launch-items:launch-url', workflowId, launchItemId)
+    ipcRenderer.invoke('launch-items:launch-url', workflowId, launchItemId),
+  deleteLaunchItem: (workflowId: string, launchItemId: string) =>
+    ipcRenderer.invoke('launch-items:delete', workflowId, launchItemId)
 });

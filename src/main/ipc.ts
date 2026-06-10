@@ -63,6 +63,20 @@ const getNextLaunchItemOrder = (workflow: Workflow): number => {
   return maxOrder + 1;
 };
 
+const normalizeLaunchItemOrders = (items: LaunchItem[]): LaunchItem[] =>
+  [...items]
+    .sort((firstItem, secondItem) => {
+      if (firstItem.order !== secondItem.order) {
+        return firstItem.order - secondItem.order;
+      }
+
+      return firstItem.createdAt.localeCompare(secondItem.createdAt);
+    })
+    .map((item, index) => ({
+      ...item,
+      order: index + 1
+    }));
+
 const createUrlLaunchItem = (
   workflow: Workflow,
   input: CreateUrlLaunchItemInput
@@ -179,6 +193,40 @@ export const registerWorkflowIpcHandlers = (): void => {
       } catch (error) {
         throw new Error(`打开失败：${getErrorMessage(error)}`);
       }
+    }
+  );
+
+  ipcMain.handle(
+    'launch-items:delete',
+    (_event, workflowId: string, launchItemId: string) => {
+      const workflows = getWorkflows();
+      const workflowIndex = findWorkflowIndex(workflows, workflowId);
+
+      if (workflowIndex === -1) {
+        throw new Error('未找到当前工作流');
+      }
+
+      const workflow = workflows[workflowIndex];
+      const nextItems = workflow.items.filter(
+        (item) => item.id !== launchItemId
+      );
+
+      if (nextItems.length === workflow.items.length) {
+        throw new Error('未找到要删除的启动项');
+      }
+
+      const now = new Date().toISOString();
+      const updatedWorkflow: Workflow = {
+        ...workflow,
+        items: normalizeLaunchItemOrders(nextItems),
+        updatedAt: now
+      };
+      const nextWorkflows = [...workflows];
+      nextWorkflows[workflowIndex] = updatedWorkflow;
+
+      saveWorkflows(nextWorkflows);
+
+      return updatedWorkflow;
     }
   );
 };

@@ -18,6 +18,10 @@ declare global {
         workflowId: string,
         launchItemId: string
       ): Promise<void>;
+      deleteLaunchItem(
+        workflowId: string,
+        launchItemId: string
+      ): Promise<Workflow>;
     };
   }
 }

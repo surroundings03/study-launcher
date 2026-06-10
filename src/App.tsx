@@ -167,6 +167,35 @@ export default function App() {
     }
   };
 
+  const handleDeleteLaunchItem = async (launchItem: LaunchItem) => {
+    if (!selectedWorkflow) {
+      setError('请先选择一个工作流');
+      return;
+    }
+
+    const shouldDelete = window.confirm('确定要删除这个启动项吗？');
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      const updatedWorkflow = await window.studyLauncher.deleteLaunchItem(
+        selectedWorkflow.id,
+        launchItem.id
+      );
+
+      setWorkflows((currentWorkflows) =>
+        currentWorkflows.map((workflow) =>
+          workflow.id === updatedWorkflow.id ? updatedWorkflow : workflow
+        )
+      );
+      setError('');
+    } catch (requestError) {
+      setError(getErrorMessage(requestError) || '删除启动项失败');
+    }
+  };
+
   return (
     <main className="app-shell">
       <section className="sidebar">
@@ -250,7 +279,7 @@ export default function App() {
               {urlLaunchItems.length > 0 ? (
                 urlLaunchItems.map((launchItem) => (
                   <div className="launch-item" key={launchItem.id}>
-                    <div>
+                    <div className="launch-item-content">
                       <strong>
                         [{launchItem.order}] {launchItem.title}
                       </strong>
@@ -262,13 +291,21 @@ export default function App() {
                       </span>
                       <small>{launchItem.enabled ? '已启用' : '已禁用'}</small>
                     </div>
-                    <button
-                      type="button"
-                      disabled={!launchItem.enabled}
-                      onClick={() => handleLaunchUrlLaunchItem(launchItem)}
-                    >
-                      启动
-                    </button>
+                    <div className="launch-item-actions">
+                      <button
+                        type="button"
+                        disabled={!launchItem.enabled}
+                        onClick={() => handleLaunchUrlLaunchItem(launchItem)}
+                      >
+                        启动
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteLaunchItem(launchItem)}
+                      >
+                        删除
+                      </button>
+                    </div>
                   </div>
                 ))
               ) : (

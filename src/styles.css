@@ -128,7 +128,7 @@ textarea {
   padding: 12px;
 }
 
-.launch-item div {
+.launch-item-content {
   display: flex;
   flex: 1;
   min-width: 0;
@@ -145,8 +145,10 @@ textarea {
   color: #444444;
 }
 
-.launch-item button {
+.launch-item-actions {
+  display: flex;
   flex: 0 0 auto;
+  gap: 8px;
 }
 
 .launch-item small {
