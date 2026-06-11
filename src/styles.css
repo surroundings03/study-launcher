@@ -182,7 +182,8 @@ button:disabled {
   flex: 1;
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 20px;
-  padding: 18px 20px 22px;
+  overflow: hidden;
+  padding: 18px 0 22px 20px;
 }
 
 .sidebar {
@@ -209,14 +210,28 @@ button:disabled {
 
 .sidebar-heading h2,
 .panel-header h2 {
+  min-width: 0;
   color: var(--text-primary);
   font-size: 18px;
   font-weight: 750;
 }
 
+.sidebar-heading {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.sidebar-heading h2 {
+  flex: 1 1 auto;
+  white-space: nowrap;
+}
+
 .new-workflow-button {
+  flex: 0 0 auto;
+  max-width: 100%;
   min-height: 32px;
   border-color: rgba(50, 224, 196, 0.36);
+  padding-inline: 10px;
   color: var(--accent);
   background: rgba(50, 224, 196, 0.08);
   white-space: nowrap;
@@ -447,8 +462,40 @@ button:disabled {
   min-height: 0;
   flex-direction: column;
   gap: 16px;
-  overflow: auto;
-  padding-right: 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 24px;
+  scrollbar-color: rgba(100, 116, 139, 0.64) rgba(7, 12, 20, 0.72);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.content::-webkit-scrollbar,
+.workflow-list::-webkit-scrollbar,
+.topbar-actions::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.content::-webkit-scrollbar-track,
+.workflow-list::-webkit-scrollbar-track,
+.topbar-actions::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(7, 12, 20, 0.72);
+}
+
+.content::-webkit-scrollbar-thumb,
+.workflow-list::-webkit-scrollbar-thumb,
+.topbar-actions::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(7, 12, 20, 0.72);
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.64);
+}
+
+.content::-webkit-scrollbar-thumb:hover,
+.workflow-list::-webkit-scrollbar-thumb:hover,
+.topbar-actions::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.72);
 }
 
 .app-alert {
@@ -620,6 +667,7 @@ button:disabled {
 .panel {
   display: flex;
   min-width: 0;
+  overflow: hidden;
   flex-direction: column;
   gap: 14px;
   padding: 16px;
@@ -641,12 +689,14 @@ button:disabled {
 }
 
 .launch-item-form {
-  grid-template-columns: minmax(140px, 0.8fr) minmax(180px, 1.2fr) auto;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   align-items: end;
 }
 
 .launch-item-form .form-actions {
+  grid-column: 1 / -1;
   align-self: end;
+  min-width: 0;
 }
 
 .launch-list {
@@ -856,7 +906,7 @@ button:disabled {
 @media (max-width: 1100px) {
   .workspace {
     gap: 14px;
-    padding: 14px;
+    padding: 14px 0 14px 14px;
   }
 
   .workflow-hero {
@@ -875,12 +925,12 @@ button:disabled {
 
 @media (max-width: 940px) {
   body {
-    overflow: auto;
+    overflow: hidden;
   }
 
   .app-root {
-    height: auto;
-    min-height: 100vh;
+    height: 100vh;
+    min-height: 640px;
   }
 
   .topbar {
@@ -897,9 +947,38 @@ button:disabled {
 
   .workspace {
     grid-template-columns: 1fr;
+    overflow-y: auto;
+    padding-right: 14px;
+    scrollbar-color: rgba(100, 116, 139, 0.64) rgba(7, 12, 20, 0.72);
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
   }
 
-  .content,
+  .workspace::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .workspace::-webkit-scrollbar-track {
+    border-radius: 999px;
+    background: rgba(7, 12, 20, 0.72);
+  }
+
+  .workspace::-webkit-scrollbar-thumb {
+    border: 2px solid rgba(7, 12, 20, 0.72);
+    border-radius: 999px;
+    background: rgba(100, 116, 139, 0.64);
+  }
+
+  .workspace::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.72);
+  }
+
+  .content {
+    overflow: visible;
+    padding-right: 0;
+    scrollbar-gutter: auto;
+  }
+
   .workflow-list {
     overflow: visible;
   }

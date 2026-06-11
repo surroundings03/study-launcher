@@ -283,7 +283,7 @@ export default function App() {
               }
             >
               <span aria-hidden="true">+</span>
-              New Workflow
+              New
             </button>
           </div>
 
