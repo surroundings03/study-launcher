@@ -4,6 +4,7 @@ import type {
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
   LaunchItem,
+  UpdateWorkflowInput,
   Workflow
 } from '../shared/types';
 import { getWorkflows, saveWorkflows } from './store';
@@ -26,6 +27,25 @@ const createWorkflow = (input: CreateWorkflowInput): Workflow => {
     sessions: [],
     createdAt: now,
     updatedAt: now
+  };
+};
+
+const updateWorkflow = (
+  workflow: Workflow,
+  input: UpdateWorkflowInput
+): Workflow => {
+  const name = typeof input?.name === 'string' ? input.name.trim() : '';
+
+  if (!name) {
+    throw new Error('Workflow name is required.');
+  }
+
+  return {
+    ...workflow,
+    name,
+    description:
+      typeof input?.description === 'string' ? input.description.trim() : '',
+    updatedAt: new Date().toISOString()
   };
 };
 
@@ -119,6 +139,29 @@ export const registerWorkflowIpcHandlers = (): void => {
 
     return workflow;
   });
+
+  ipcMain.handle(
+    'workflows:update',
+    (_event, workflowId: string, input: UpdateWorkflowInput) => {
+      const workflows = getWorkflows();
+      const workflowIndex = findWorkflowIndex(workflows, workflowId);
+
+      if (workflowIndex === -1) {
+        throw new Error('Workflow not found.');
+      }
+
+      const nextWorkflows = [...workflows];
+      const updatedWorkflow = updateWorkflow(
+        nextWorkflows[workflowIndex],
+        input
+      );
+
+      nextWorkflows[workflowIndex] = updatedWorkflow;
+      saveWorkflows(nextWorkflows);
+
+      return updatedWorkflow;
+    }
+  );
 
   ipcMain.handle('workflows:delete', (_event, workflowId: string) => {
     const workflows = getWorkflows();

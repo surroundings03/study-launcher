@@ -1,6 +1,7 @@
 import type {
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
+  UpdateWorkflowInput,
   Workflow
 } from './types';
 
@@ -9,6 +10,10 @@ declare global {
     studyLauncher: {
       getWorkflows(): Promise<Workflow[]>;
       createWorkflow(input: CreateWorkflowInput): Promise<Workflow>;
+      updateWorkflow(
+        workflowId: string,
+        input: UpdateWorkflowInput
+      ): Promise<Workflow>;
       deleteWorkflow(workflowId: string): Promise<Workflow[]>;
       addUrlLaunchItem(
         workflowId: string,

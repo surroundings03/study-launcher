@@ -63,6 +63,11 @@ export type CreateWorkflowInput = {
   description?: string;
 };
 
+export type UpdateWorkflowInput = {
+  name: string;
+  description?: string;
+};
+
 export type CreateUrlLaunchItemInput = {
   title: string;
   target: string;

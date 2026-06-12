@@ -243,13 +243,18 @@ button:disabled {
 }
 
 .workflow-form,
-.launch-item-form {
+.launch-item-form,
+.workflow-edit-form {
   display: grid;
   gap: 10px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   padding: 12px;
   background: rgba(10, 17, 28, 0.66);
+}
+
+.workflow-edit-form {
+  max-width: 560px;
 }
 
 .field {
@@ -286,6 +291,11 @@ button:disabled {
 .form-actions {
   justify-content: flex-end;
   gap: 8px;
+}
+
+.inline-error {
+  color: #ffb3b7;
+  font-size: 12px;
 }
 
 .accent-button {
