@@ -72,3 +72,19 @@ export type CreateUrlLaunchItemInput = {
   title: string;
   target: string;
 };
+
+export type CreateLaunchItemInput = {
+  title: string;
+  type: LaunchItemType;
+  target: string;
+};
+
+export type PickPathResult =
+  | {
+      canceled: true;
+    }
+  | {
+      canceled: false;
+      path: string;
+      title: string;
+    };

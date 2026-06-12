@@ -1,6 +1,8 @@
 import type {
+  CreateLaunchItemInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
+  PickPathResult,
   UpdateWorkflowInput,
   Workflow
 } from './types';
@@ -15,10 +17,21 @@ declare global {
         input: UpdateWorkflowInput
       ): Promise<Workflow>;
       deleteWorkflow(workflowId: string): Promise<Workflow[]>;
+      pickFile(): Promise<PickPathResult>;
+      pickFolder(): Promise<PickPathResult>;
+      pickApp(): Promise<PickPathResult>;
+      addLaunchItem(
+        workflowId: string,
+        input: CreateLaunchItemInput
+      ): Promise<Workflow>;
       addUrlLaunchItem(
         workflowId: string,
         input: CreateUrlLaunchItemInput
       ): Promise<Workflow>;
+      launchLaunchItem(
+        workflowId: string,
+        launchItemId: string
+      ): Promise<void>;
       launchUrlLaunchItem(
         workflowId: string,
         launchItemId: string

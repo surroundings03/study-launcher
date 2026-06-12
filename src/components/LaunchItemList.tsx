@@ -3,16 +3,16 @@ import type { LaunchItem } from '../shared/types';
 type LaunchItemListProps = {
   launchItems: LaunchItem[];
   onDeleteLaunchItem(launchItem: LaunchItem): void;
-  onLaunchUrlLaunchItem(launchItem: LaunchItem): void;
+  onLaunchItem(launchItem: LaunchItem): void;
 };
 
 const formatOrder = (order: number): string =>
-  Number.isFinite(order) ? String(order).padStart(2, '0') : '--';
+  Number.isFinite(order) ? `[${order}]` : '[--]';
 
 export function LaunchItemList({
   launchItems,
   onDeleteLaunchItem,
-  onLaunchUrlLaunchItem
+  onLaunchItem
 }: LaunchItemListProps) {
   if (launchItems.length === 0) {
     return (
@@ -36,7 +36,9 @@ export function LaunchItemList({
           <div className="launch-main">
             <div className="launch-title-line">
               <strong>{launchItem.title}</strong>
-              <span className="type-badge">URL</span>
+              <span className={`type-badge ${launchItem.type}`}>
+                {launchItem.type.toUpperCase()}
+              </span>
             </div>
             <span className="launch-target" title={launchItem.target}>
               {launchItem.target}
@@ -58,7 +60,7 @@ export function LaunchItemList({
               className="secondary-button"
               type="button"
               disabled={!launchItem.enabled}
-              onClick={() => onLaunchUrlLaunchItem(launchItem)}
+              onClick={() => onLaunchItem(launchItem)}
             >
               Open
             </button>

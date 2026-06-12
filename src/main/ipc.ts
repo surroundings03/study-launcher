@@ -1,19 +1,55 @@
-import { ipcMain, shell } from 'electron';
+import { dialog, ipcMain, shell } from 'electron';
+import type { OpenDialogOptions } from 'electron';
 import { randomUUID } from 'node:crypto';
+import { existsSync, statSync } from 'node:fs';
+import path from 'node:path';
 import type {
+  CreateLaunchItemInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
   LaunchItem,
+  LaunchItemType,
+  PickPathResult,
   UpdateWorkflowInput,
   Workflow
 } from '../shared/types';
 import { getWorkflows, saveWorkflows } from './store';
 
+type IpcHandler<TArgs extends unknown[], TResult> = (
+  ...args: TArgs
+) => TResult | Promise<TResult>;
+
+const launchItemTypes = new Set<LaunchItemType>([
+  'url',
+  'file',
+  'folder',
+  'app'
+]);
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+const handleIpc = <TArgs extends unknown[], TResult>(
+  channel: string,
+  handler: IpcHandler<TArgs, TResult>
+): void => {
+  ipcMain.handle(channel, async (_event, ...args: TArgs) => {
+    try {
+      return await handler(...args);
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  });
+};
+
+const isLaunchItemType = (value: unknown): value is LaunchItemType =>
+  typeof value === 'string' && launchItemTypes.has(value as LaunchItemType);
+
 const createWorkflow = (input: CreateWorkflowInput): Workflow => {
   const name = input.name.trim();
 
   if (!name) {
-    throw new Error('工作流名称不能为空');
+    throw new Error('Workflow name is required.');
   }
 
   const now = new Date().toISOString();
@@ -53,7 +89,7 @@ const parseHttpUrl = (target: string): string => {
   const trimmedTarget = target.trim();
 
   if (!trimmedTarget) {
-    throw new Error('URL 不能为空');
+    throw new Error('URL is required.');
   }
 
   let parsedUrl: URL;
@@ -61,14 +97,63 @@ const parseHttpUrl = (target: string): string => {
   try {
     parsedUrl = new URL(trimmedTarget);
   } catch {
-    throw new Error('URL 格式错误');
+    throw new Error('URL format is invalid.');
   }
 
   if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-    throw new Error('只支持 http 和 https 协议');
+    throw new Error('Only http and https URLs are supported.');
   }
 
   return parsedUrl.toString();
+};
+
+const getPathMissingMessage = (type: LaunchItemType): string => {
+  if (type === 'folder') {
+    return 'Folder does not exist or was moved.';
+  }
+
+  if (type === 'app') {
+    return 'Application does not exist or was moved.';
+  }
+
+  return 'File does not exist or was moved.';
+};
+
+const validateLocalTarget = (
+  type: Exclude<LaunchItemType, 'url'>,
+  target: string
+): string => {
+  const trimmedTarget = target.trim();
+
+  if (!trimmedTarget || !existsSync(trimmedTarget)) {
+    throw new Error(getPathMissingMessage(type));
+  }
+
+  let targetStats: ReturnType<typeof statSync>;
+
+  try {
+    targetStats = statSync(trimmedTarget);
+  } catch {
+    throw new Error(getPathMissingMessage(type));
+  }
+
+  if (type === 'folder') {
+    if (!targetStats.isDirectory()) {
+      throw new Error('Selected target is not a folder.');
+    }
+
+    return trimmedTarget;
+  }
+
+  if (!targetStats.isFile()) {
+    throw new Error('Selected target is not a file.');
+  }
+
+  if (type === 'app' && path.extname(trimmedTarget).toLowerCase() !== '.exe') {
+    throw new Error('Only .exe applications are allowed.');
+  }
+
+  return trimmedTarget;
 };
 
 const getNextLaunchItemOrder = (workflow: Workflow): number => {
@@ -97,25 +182,34 @@ const normalizeLaunchItemOrders = (items: LaunchItem[]): LaunchItem[] =>
       order: index + 1
     }));
 
-const createUrlLaunchItem = (
+const createLaunchItem = (
   workflow: Workflow,
-  input: CreateUrlLaunchItemInput
+  input: CreateLaunchItemInput
 ): LaunchItem => {
   const title = typeof input?.title === 'string' ? input.title.trim() : '';
+  const type = input?.type;
 
   if (!title) {
-    throw new Error('标题不能为空');
+    throw new Error('Launch item title is required.');
   }
 
-  const target = parseHttpUrl(
-    typeof input?.target === 'string' ? input.target : ''
-  );
+  if (!isLaunchItemType(type)) {
+    throw new Error('Launch item type is invalid.');
+  }
+
+  const target =
+    type === 'url'
+      ? parseHttpUrl(typeof input?.target === 'string' ? input.target : '')
+      : validateLocalTarget(
+          type,
+          typeof input?.target === 'string' ? input.target : ''
+        );
   const now = new Date().toISOString();
 
   return {
     id: randomUUID(),
     title,
-    type: 'url',
+    type,
     target,
     enabled: true,
     order: getNextLaunchItemOrder(workflow),
@@ -127,22 +221,113 @@ const createUrlLaunchItem = (
 const findWorkflowIndex = (workflows: Workflow[], workflowId: string): number =>
   workflows.findIndex((workflow) => workflow.id === workflowId);
 
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error);
+const addLaunchItemToWorkflow = (
+  workflowId: string,
+  input: CreateLaunchItemInput
+): Workflow => {
+  const workflows = getWorkflows();
+  const workflowIndex = findWorkflowIndex(workflows, workflowId);
+
+  if (workflowIndex === -1) {
+    throw new Error('Workflow not found.');
+  }
+
+  const workflow = workflows[workflowIndex];
+  const launchItem = createLaunchItem(workflow, input);
+  const updatedWorkflow: Workflow = {
+    ...workflow,
+    items: [...workflow.items, launchItem],
+    updatedAt: launchItem.updatedAt
+  };
+  const nextWorkflows = [...workflows];
+  nextWorkflows[workflowIndex] = updatedWorkflow;
+
+  saveWorkflows(nextWorkflows);
+
+  return updatedWorkflow;
+};
+
+const getLaunchItem = (workflowId: string, launchItemId: string) => {
+  const workflow = getWorkflows().find(
+    (currentWorkflow) => currentWorkflow.id === workflowId
+  );
+
+  if (!workflow) {
+    throw new Error('Workflow not found.');
+  }
+
+  const launchItem = workflow.items.find((item) => item.id === launchItemId);
+
+  if (!launchItem) {
+    throw new Error('Launch item not found.');
+  }
+
+  return launchItem;
+};
+
+const launchItem = async (
+  workflowId: string,
+  launchItemId: string
+): Promise<void> => {
+  const item = getLaunchItem(workflowId, launchItemId);
+
+  if (!item.enabled) {
+    throw new Error('Launch item is disabled.');
+  }
+
+  if (item.type === 'url') {
+    try {
+      await shell.openExternal(parseHttpUrl(item.target));
+      return;
+    } catch (error) {
+      throw new Error(`Unable to open URL: ${getErrorMessage(error)}`);
+    }
+  }
+
+  const target = validateLocalTarget(item.type, item.target);
+  const openError = await shell.openPath(target);
+
+  if (openError) {
+    throw new Error(`Unable to open launch item: ${openError}`);
+  }
+};
+
+const pickPath = async (
+  options: OpenDialogOptions,
+  requiresExe = false
+): Promise<PickPathResult> => {
+  const result = await dialog.showOpenDialog(options);
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { canceled: true };
+  }
+
+  const selectedPath = result.filePaths[0];
+
+  if (requiresExe && path.extname(selectedPath).toLowerCase() !== '.exe') {
+    throw new Error('Only .exe applications are allowed.');
+  }
+
+  return {
+    canceled: false,
+    path: selectedPath,
+    title: path.basename(selectedPath)
+  };
+};
 
 export const registerWorkflowIpcHandlers = (): void => {
-  ipcMain.handle('workflows:get', () => getWorkflows());
+  handleIpc('workflows:get', () => getWorkflows());
 
-  ipcMain.handle('workflows:create', (_event, input: CreateWorkflowInput) => {
+  handleIpc('workflows:create', (input: CreateWorkflowInput) => {
     const workflow = createWorkflow(input);
     saveWorkflows([...getWorkflows(), workflow]);
 
     return workflow;
   });
 
-  ipcMain.handle(
+  handleIpc(
     'workflows:update',
-    (_event, workflowId: string, input: UpdateWorkflowInput) => {
+    (workflowId: string, input: UpdateWorkflowInput) => {
       const workflows = getWorkflows();
       const workflowIndex = findWorkflowIndex(workflows, workflowId);
 
@@ -163,14 +348,14 @@ export const registerWorkflowIpcHandlers = (): void => {
     }
   );
 
-  ipcMain.handle('workflows:delete', (_event, workflowId: string) => {
+  handleIpc('workflows:delete', (workflowId: string) => {
     const workflows = getWorkflows();
     const nextWorkflows = workflows.filter(
       (workflow) => workflow.id !== workflowId
     );
 
     if (nextWorkflows.length === workflows.length) {
-      throw new Error('未找到要删除的工作流');
+      throw new Error('Workflow not found.');
     }
 
     saveWorkflows(nextWorkflows);
@@ -178,75 +363,69 @@ export const registerWorkflowIpcHandlers = (): void => {
     return nextWorkflows;
   });
 
-  ipcMain.handle(
+  handleIpc('launch-items:pick-file', () =>
+    pickPath({
+      properties: ['openFile'],
+      title: 'Choose file'
+    })
+  );
+
+  handleIpc('launch-items:pick-folder', () =>
+    pickPath({
+      properties: ['openDirectory'],
+      title: 'Choose folder'
+    })
+  );
+
+  handleIpc('launch-items:pick-app', () =>
+    pickPath(
+      {
+        filters: [{ name: 'Applications', extensions: ['exe'] }],
+        properties: ['openFile'],
+        title: 'Choose application'
+      },
+      true
+    )
+  );
+
+  handleIpc(
+    'launch-items:add',
+    (workflowId: string, input: CreateLaunchItemInput) =>
+      addLaunchItemToWorkflow(workflowId, input)
+  );
+
+  handleIpc(
     'launch-items:add-url',
-    (_event, workflowId: string, input: CreateUrlLaunchItemInput) => {
-      const workflows = getWorkflows();
-      const workflowIndex = findWorkflowIndex(workflows, workflowId);
-
-      if (workflowIndex === -1) {
-        throw new Error('未找到当前工作流');
-      }
-
-      const workflow = workflows[workflowIndex];
-      const launchItem = createUrlLaunchItem(workflow, input);
-      const updatedWorkflow: Workflow = {
-        ...workflow,
-        items: [...workflow.items, launchItem],
-        updatedAt: launchItem.updatedAt
-      };
-      const nextWorkflows = [...workflows];
-      nextWorkflows[workflowIndex] = updatedWorkflow;
-
-      saveWorkflows(nextWorkflows);
-
-      return updatedWorkflow;
-    }
+    (workflowId: string, input: CreateUrlLaunchItemInput) =>
+      addLaunchItemToWorkflow(workflowId, {
+        ...input,
+        type: 'url'
+      })
   );
 
-  ipcMain.handle(
+  handleIpc('launch-items:launch', launchItem);
+
+  handleIpc(
     'launch-items:launch-url',
-    async (_event, workflowId: string, launchItemId: string) => {
-      const workflow = getWorkflows().find(
-        (currentWorkflow) => currentWorkflow.id === workflowId
-      );
+    (workflowId: string, launchItemId: string) => {
+      const item = getLaunchItem(workflowId, launchItemId);
 
-      if (!workflow) {
-        throw new Error('未找到当前工作流');
+      if (item.type !== 'url') {
+        throw new Error('Launch item is not a URL.');
       }
 
-      const launchItem = workflow.items.find((item) => item.id === launchItemId);
-
-      if (!launchItem) {
-        throw new Error('未找到 URL 启动项');
-      }
-
-      if (launchItem.type !== 'url') {
-        throw new Error('当前只支持启动 URL 类型');
-      }
-
-      if (!launchItem.enabled) {
-        throw new Error('启动项已禁用');
-      }
-
-      const target = parseHttpUrl(launchItem.target);
-
-      try {
-        await shell.openExternal(target);
-      } catch (error) {
-        throw new Error(`打开失败：${getErrorMessage(error)}`);
-      }
+      return launchItem(workflowId, launchItemId);
     }
   );
 
-  ipcMain.handle(
+  handleIpc(
     'launch-items:delete',
-    (_event, workflowId: string, launchItemId: string) => {
+    (workflowId: string, launchItemId: string) => {
       const workflows = getWorkflows();
       const workflowIndex = findWorkflowIndex(workflows, workflowId);
 
       if (workflowIndex === -1) {
-        throw new Error('未找到当前工作流');
+        throw new Error('Workflow not found.');
       }
 
       const workflow = workflows[workflowIndex];
@@ -255,7 +434,7 @@ export const registerWorkflowIpcHandlers = (): void => {
       );
 
       if (nextItems.length === workflow.items.length) {
-        throw new Error('未找到要删除的启动项');
+        throw new Error('Launch item not found.');
       }
 
       const now = new Date().toISOString();

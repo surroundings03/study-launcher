@@ -3,7 +3,7 @@ import { AppShell } from './components/AppShell';
 import { Sidebar } from './components/Sidebar';
 import { WorkflowDetail } from './components/WorkflowDetail';
 import { useWorkflows } from './hooks/useWorkflows';
-import type { CreateUrlLaunchItemInput, LaunchItem } from './shared/types';
+import type { CreateLaunchItemInput, LaunchItem } from './shared/types';
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
@@ -32,31 +32,29 @@ export default function App() {
   } = useWorkflows();
   const [isStarting, setIsStarting] = useState(false);
 
-  const urlLaunchItems = useMemo(
+  const launchItems = useMemo(
     () =>
       selectedWorkflow
         ? sortLaunchItemsByOrder(
-            selectedWorkflow.items.filter((item) => item.type === 'url')
+            selectedWorkflow.items
           )
         : [],
     [selectedWorkflow]
   );
 
   const enabledLaunchItems = useMemo(
-    () => urlLaunchItems.filter((launchItem) => launchItem.enabled),
-    [urlLaunchItems]
+    () => launchItems.filter((launchItem) => launchItem.enabled),
+    [launchItems]
   );
 
-  const handleAddUrlLaunchItem = async (
-    input: CreateUrlLaunchItemInput
-  ) => {
+  const handleAddLaunchItem = async (input: CreateLaunchItemInput) => {
     if (!selectedWorkflow) {
-      setError('Select a workflow before adding a URL.');
+      setError('Select a workflow before adding a launch item.');
       return null;
     }
 
     try {
-      const updatedWorkflow = await window.studyLauncher.addUrlLaunchItem(
+      const updatedWorkflow = await window.studyLauncher.addLaunchItem(
         selectedWorkflow.id,
         input
       );
@@ -66,25 +64,25 @@ export default function App() {
 
       return updatedWorkflow;
     } catch (requestError) {
-      setError(getErrorMessage(requestError) || 'Failed to add URL item.');
+      setError(getErrorMessage(requestError) || 'Failed to add launch item.');
       return null;
     }
   };
 
-  const handleLaunchUrlLaunchItem = async (launchItem: LaunchItem) => {
+  const handleLaunchItem = async (launchItem: LaunchItem) => {
     if (!selectedWorkflow) {
       setError('Select a workflow before launching an item.');
       return;
     }
 
     try {
-      await window.studyLauncher.launchUrlLaunchItem(
+      await window.studyLauncher.launchLaunchItem(
         selectedWorkflow.id,
         launchItem.id
       );
       setError('');
     } catch (requestError) {
-      setError(getErrorMessage(requestError) || 'Failed to open URL.');
+      setError(getErrorMessage(requestError) || 'Unable to open launch item.');
     }
   };
 
@@ -95,7 +93,7 @@ export default function App() {
     }
 
     if (enabledLaunchItems.length === 0) {
-      setError('Add an enabled URL launch item before starting study.');
+      setError('Add an enabled launch item before starting study.');
       return;
     }
 
@@ -103,7 +101,7 @@ export default function App() {
 
     try {
       for (const launchItem of enabledLaunchItems) {
-        await window.studyLauncher.launchUrlLaunchItem(
+        await window.studyLauncher.launchLaunchItem(
           selectedWorkflow.id,
           launchItem.id
         );
@@ -168,12 +166,12 @@ export default function App() {
           workflow={selectedWorkflow}
           enabledLaunchItemCount={enabledLaunchItems.length}
           isStarting={isStarting}
-          launchItems={urlLaunchItems}
-          onAddUrlLaunchItem={handleAddUrlLaunchItem}
+          launchItems={launchItems}
+          onAddLaunchItem={handleAddLaunchItem}
           onDeleteLaunchItem={handleDeleteLaunchItem}
           onDeleteWorkflow={deleteWorkflow}
           onError={setError}
-          onLaunchUrlLaunchItem={handleLaunchUrlLaunchItem}
+          onLaunchItem={handleLaunchItem}
           onStartStudy={handleStartStudy}
           onUpdateWorkflow={updateWorkflow}
         />

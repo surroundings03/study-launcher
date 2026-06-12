@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type {
-  CreateUrlLaunchItemInput,
+  CreateLaunchItemInput,
   LaunchItem,
   UpdateWorkflowInput,
   Workflow
@@ -18,13 +18,13 @@ type WorkflowDetailProps = {
   enabledLaunchItemCount: number;
   isStarting: boolean;
   launchItems: LaunchItem[];
-  onAddUrlLaunchItem(
-    input: CreateUrlLaunchItemInput
+  onAddLaunchItem(
+    input: CreateLaunchItemInput
   ): Promise<Workflow | null>;
   onDeleteLaunchItem(launchItem: LaunchItem): void;
   onDeleteWorkflow(workflow: Workflow): void;
   onError(message: string): void;
-  onLaunchUrlLaunchItem(launchItem: LaunchItem): void;
+  onLaunchItem(launchItem: LaunchItem): void;
   onStartStudy(): void;
   onUpdateWorkflow(
     workflowId: string,
@@ -37,11 +37,11 @@ export function WorkflowDetail({
   enabledLaunchItemCount,
   isStarting,
   launchItems,
-  onAddUrlLaunchItem,
+  onAddLaunchItem,
   onDeleteLaunchItem,
   onDeleteWorkflow,
   onError,
-  onLaunchUrlLaunchItem,
+  onLaunchItem,
   onStartStudy,
   onUpdateWorkflow
 }: WorkflowDetailProps) {
@@ -82,7 +82,7 @@ export function WorkflowDetail({
                 </button>
               </div>
               <div className="hero-meta">
-                <span>{launchItems.length} URL launch items</span>
+                <span>{launchItems.length} launch items</span>
                 <span>{enabledLaunchItemCount} enabled</span>
               </div>
             </>
@@ -101,7 +101,7 @@ export function WorkflowDetail({
           <div className="panel-header">
             <div>
               <h2>Launch Items</h2>
-              <p>Start Study opens enabled URL items in this order.</p>
+              <p>Start opens enabled launch items in this order.</p>
             </div>
             <button
               className="panel-action"
@@ -117,7 +117,7 @@ export function WorkflowDetail({
 
           {isAddItemFormOpen && (
             <LaunchItemEditor
-              onAddUrlLaunchItem={onAddUrlLaunchItem}
+              onAddLaunchItem={onAddLaunchItem}
               onCancel={() => setIsAddItemFormOpen(false)}
               onError={onError}
             />
@@ -126,7 +126,7 @@ export function WorkflowDetail({
           <LaunchItemList
             launchItems={launchItems}
             onDeleteLaunchItem={onDeleteLaunchItem}
-            onLaunchUrlLaunchItem={onLaunchUrlLaunchItem}
+            onLaunchItem={onLaunchItem}
           />
         </section>
 

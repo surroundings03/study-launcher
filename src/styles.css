@@ -704,8 +704,40 @@ button:disabled {
   align-items: end;
 }
 
+.launch-type-field,
 .launch-item-form .form-actions {
   grid-column: 1 / -1;
+}
+
+.launch-type-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.type-tab {
+  min-height: 30px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  padding: 5px 10px;
+  color: var(--text-secondary);
+  background: rgba(17, 27, 42, 0.78);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.type-tab.selected {
+  border-color: rgba(50, 224, 196, 0.42);
+  color: var(--accent);
+  background: rgba(50, 224, 196, 0.1);
+}
+
+.picker-actions {
+  align-self: end;
+}
+
+.launch-item-form .form-actions {
   align-self: end;
   min-width: 0;
 }
@@ -786,6 +818,24 @@ button:disabled {
   background: rgba(59, 130, 246, 0.13);
   font-size: 11px;
   font-weight: 800;
+}
+
+.type-badge.file {
+  border-color: rgba(50, 224, 196, 0.3);
+  color: #67e8f9;
+  background: rgba(50, 224, 196, 0.12);
+}
+
+.type-badge.folder {
+  border-color: rgba(250, 204, 21, 0.28);
+  color: #fde68a;
+  background: rgba(250, 204, 21, 0.1);
+}
+
+.type-badge.app {
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #fda4af;
+  background: rgba(248, 113, 113, 0.1);
 }
 
 .launch-target {

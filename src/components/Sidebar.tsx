@@ -102,9 +102,7 @@ export function Sidebar({
         {workflows.length > 0 ? (
           workflows.map((workflow) => {
             const isSelected = workflow.id === selectedWorkflowId;
-            const workflowUrlCount = workflow.items.filter(
-              (item) => item.type === 'url'
-            ).length;
+            const launchItemCount = workflow.items.length;
 
             return (
               <div
@@ -122,8 +120,8 @@ export function Sidebar({
                   <span className="workflow-copy">
                     <strong>{workflow.name}</strong>
                     <span>
-                      {workflowUrlCount} URL item
-                      {workflowUrlCount === 1 ? '' : 's'}
+                      {launchItemCount} launch item
+                      {launchItemCount === 1 ? '' : 's'}
                     </span>
                   </span>
                 </button>
