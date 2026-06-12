@@ -1,5 +1,7 @@
 export type LaunchItemType = "url" | "file" | "folder" | "app";
 
+export type MoveLaunchItemDirection = "up" | "down";
+
 export type LaunchItem = {
   id: string;
   title: string;

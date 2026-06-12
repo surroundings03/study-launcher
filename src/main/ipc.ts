@@ -9,6 +9,7 @@ import type {
   CreateWorkflowInput,
   LaunchItem,
   LaunchItemType,
+  MoveLaunchItemDirection,
   PickPathResult,
   UpdateWorkflowInput,
   Workflow
@@ -182,6 +183,50 @@ const normalizeLaunchItemOrders = (items: LaunchItem[]): LaunchItem[] =>
       order: index + 1
     }));
 
+const assignLaunchItemOrders = (items: LaunchItem[]): LaunchItem[] =>
+  items.map((item, index) => ({
+    ...item,
+    order: index + 1
+  }));
+
+const didLaunchItemOrderChange = (
+  currentItems: LaunchItem[],
+  normalizedItems: LaunchItem[]
+): boolean =>
+  currentItems.length !== normalizedItems.length ||
+  currentItems.some((item, index) => {
+    const normalizedItem = normalizedItems[index];
+
+    return !normalizedItem || item.id !== normalizedItem.id || item.order !== normalizedItem.order;
+  });
+
+const normalizeWorkflowLaunchItemOrders = (workflow: Workflow): Workflow => {
+  const normalizedItems = normalizeLaunchItemOrders(workflow.items);
+
+  if (!didLaunchItemOrderChange(workflow.items, normalizedItems)) {
+    return workflow;
+  }
+
+  return {
+    ...workflow,
+    items: normalizedItems
+  };
+};
+
+const getNormalizedWorkflows = (): Workflow[] => {
+  const workflows = getWorkflows();
+  const normalizedWorkflows = workflows.map(normalizeWorkflowLaunchItemOrders);
+  const didNormalize = workflows.some(
+    (workflow, index) => workflow !== normalizedWorkflows[index]
+  );
+
+  if (didNormalize) {
+    saveWorkflows(normalizedWorkflows);
+  }
+
+  return normalizedWorkflows;
+};
+
 const createLaunchItem = (
   workflow: Workflow,
   input: CreateLaunchItemInput
@@ -225,7 +270,7 @@ const addLaunchItemToWorkflow = (
   workflowId: string,
   input: CreateLaunchItemInput
 ): Workflow => {
-  const workflows = getWorkflows();
+  const workflows = getNormalizedWorkflows();
   const workflowIndex = findWorkflowIndex(workflows, workflowId);
 
   if (workflowIndex === -1) {
@@ -248,7 +293,7 @@ const addLaunchItemToWorkflow = (
 };
 
 const getLaunchItem = (workflowId: string, launchItemId: string) => {
-  const workflow = getWorkflows().find(
+  const workflow = getNormalizedWorkflows().find(
     (currentWorkflow) => currentWorkflow.id === workflowId
   );
 
@@ -263,6 +308,59 @@ const getLaunchItem = (workflowId: string, launchItemId: string) => {
   }
 
   return launchItem;
+};
+
+const moveLaunchItemInWorkflow = (
+  workflowId: string,
+  launchItemId: string,
+  direction: MoveLaunchItemDirection
+): Workflow => {
+  if (direction !== 'up' && direction !== 'down') {
+    throw new Error('Move direction is invalid.');
+  }
+
+  const workflows = getNormalizedWorkflows();
+  const workflowIndex = findWorkflowIndex(workflows, workflowId);
+
+  if (workflowIndex === -1) {
+    throw new Error('Workflow not found.');
+  }
+
+  const workflow = workflows[workflowIndex];
+  const orderedItems = normalizeLaunchItemOrders(workflow.items);
+  const itemIndex = orderedItems.findIndex((item) => item.id === launchItemId);
+
+  if (itemIndex === -1) {
+    throw new Error('Launch item not found.');
+  }
+
+  const targetIndex = direction === 'up' ? itemIndex - 1 : itemIndex + 1;
+
+  if (targetIndex < 0 || targetIndex >= orderedItems.length) {
+    return {
+      ...workflow,
+      items: orderedItems
+    };
+  }
+
+  const nextItems = [...orderedItems];
+  [nextItems[itemIndex], nextItems[targetIndex]] = [
+    nextItems[targetIndex],
+    nextItems[itemIndex]
+  ];
+
+  const now = new Date().toISOString();
+  const updatedWorkflow: Workflow = {
+    ...workflow,
+    items: assignLaunchItemOrders(nextItems),
+    updatedAt: now
+  };
+  const nextWorkflows = [...workflows];
+  nextWorkflows[workflowIndex] = updatedWorkflow;
+
+  saveWorkflows(nextWorkflows);
+
+  return updatedWorkflow;
 };
 
 const launchItem = async (
@@ -316,7 +414,7 @@ const pickPath = async (
 };
 
 export const registerWorkflowIpcHandlers = (): void => {
-  handleIpc('workflows:get', () => getWorkflows());
+  handleIpc('workflows:get', () => getNormalizedWorkflows());
 
   handleIpc('workflows:create', (input: CreateWorkflowInput) => {
     const workflow = createWorkflow(input);
@@ -328,7 +426,7 @@ export const registerWorkflowIpcHandlers = (): void => {
   handleIpc(
     'workflows:update',
     (workflowId: string, input: UpdateWorkflowInput) => {
-      const workflows = getWorkflows();
+      const workflows = getNormalizedWorkflows();
       const workflowIndex = findWorkflowIndex(workflows, workflowId);
 
       if (workflowIndex === -1) {
@@ -349,7 +447,7 @@ export const registerWorkflowIpcHandlers = (): void => {
   );
 
   handleIpc('workflows:delete', (workflowId: string) => {
-    const workflows = getWorkflows();
+    const workflows = getNormalizedWorkflows();
     const nextWorkflows = workflows.filter(
       (workflow) => workflow.id !== workflowId
     );
@@ -406,6 +504,15 @@ export const registerWorkflowIpcHandlers = (): void => {
   handleIpc('launch-items:launch', launchItem);
 
   handleIpc(
+    'launch-items:move',
+    (
+      workflowId: string,
+      launchItemId: string,
+      direction: MoveLaunchItemDirection
+    ) => moveLaunchItemInWorkflow(workflowId, launchItemId, direction)
+  );
+
+  handleIpc(
     'launch-items:launch-url',
     (workflowId: string, launchItemId: string) => {
       const item = getLaunchItem(workflowId, launchItemId);
@@ -421,7 +528,7 @@ export const registerWorkflowIpcHandlers = (): void => {
   handleIpc(
     'launch-items:delete',
     (workflowId: string, launchItemId: string) => {
-      const workflows = getWorkflows();
+      const workflows = getNormalizedWorkflows();
       const workflowIndex = findWorkflowIndex(workflows, workflowId);
 
       if (workflowIndex === -1) {

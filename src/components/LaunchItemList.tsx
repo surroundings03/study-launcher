@@ -1,18 +1,22 @@
-import type { LaunchItem } from '../shared/types';
+import type { LaunchItem, MoveLaunchItemDirection } from '../shared/types';
 
 type LaunchItemListProps = {
   launchItems: LaunchItem[];
   onDeleteLaunchItem(launchItem: LaunchItem): void;
   onLaunchItem(launchItem: LaunchItem): void;
+  onMoveLaunchItem(
+    launchItem: LaunchItem,
+    direction: MoveLaunchItemDirection
+  ): void;
 };
 
-const formatOrder = (order: number): string =>
-  Number.isFinite(order) ? `[${order}]` : '[--]';
+const formatOrder = (index: number): string => `[${index + 1}]`;
 
 export function LaunchItemList({
   launchItems,
   onDeleteLaunchItem,
-  onLaunchItem
+  onLaunchItem,
+  onMoveLaunchItem
 }: LaunchItemListProps) {
   if (launchItems.length === 0) {
     return (
@@ -25,13 +29,13 @@ export function LaunchItemList({
 
   return (
     <div className="launch-list">
-      {launchItems.map((launchItem) => (
+      {launchItems.map((launchItem, index) => (
         <article
           className={launchItem.enabled ? 'launch-row' : 'launch-row disabled'}
           key={launchItem.id}
         >
           <span className="order-badge" aria-label="Launch order">
-            {formatOrder(launchItem.order)}
+            {formatOrder(index)}
           </span>
           <div className="launch-main">
             <div className="launch-title-line">
@@ -45,6 +49,28 @@ export function LaunchItemList({
             </span>
           </div>
           <div className="launch-actions">
+            <div className="order-actions" aria-label="Launch item order">
+              <button
+                className="order-button"
+                type="button"
+                disabled={index === 0}
+                onClick={() => onMoveLaunchItem(launchItem, 'up')}
+                title="Move up"
+                aria-label={`Move ${launchItem.title} up`}
+              >
+                ↑
+              </button>
+              <button
+                className="order-button"
+                type="button"
+                disabled={index === launchItems.length - 1}
+                onClick={() => onMoveLaunchItem(launchItem, 'down')}
+                title="Move down"
+                aria-label={`Move ${launchItem.title} down`}
+              >
+                ↓
+              </button>
+            </div>
             <span
               className={
                 launchItem.enabled ? 'toggle-indicator on' : 'toggle-indicator'

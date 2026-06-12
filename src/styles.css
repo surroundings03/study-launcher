@@ -145,6 +145,7 @@ button:disabled {
 .secondary-button,
 .accent-button,
 .new-workflow-button,
+.order-button,
 .row-action {
   display: inline-flex;
   min-height: 34px;
@@ -170,6 +171,7 @@ button:disabled {
 .icon-text-button:not(:disabled):hover,
 .secondary-button:not(:disabled):hover,
 .new-workflow-button:not(:disabled):hover,
+.order-button:not(:disabled):hover,
 .row-action:not(:disabled):hover {
   border-color: var(--border-strong);
   color: var(--text-primary);
@@ -850,6 +852,21 @@ button:disabled {
   flex: 0 0 auto;
   gap: 8px;
   white-space: nowrap;
+}
+
+.order-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.order-button {
+  width: 28px;
+  min-height: 28px;
+  padding: 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 850;
 }
 
 .toggle-indicator {

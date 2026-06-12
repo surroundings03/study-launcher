@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type {
   CreateLaunchItemInput,
   LaunchItem,
+  MoveLaunchItemDirection,
   UpdateWorkflowInput,
   Workflow
 } from '../shared/types';
@@ -25,6 +26,10 @@ type WorkflowDetailProps = {
   onDeleteWorkflow(workflow: Workflow): void;
   onError(message: string): void;
   onLaunchItem(launchItem: LaunchItem): void;
+  onMoveLaunchItem(
+    launchItem: LaunchItem,
+    direction: MoveLaunchItemDirection
+  ): void;
   onStartStudy(): void;
   onUpdateWorkflow(
     workflowId: string,
@@ -42,6 +47,7 @@ export function WorkflowDetail({
   onDeleteWorkflow,
   onError,
   onLaunchItem,
+  onMoveLaunchItem,
   onStartStudy,
   onUpdateWorkflow
 }: WorkflowDetailProps) {
@@ -127,6 +133,7 @@ export function WorkflowDetail({
             launchItems={launchItems}
             onDeleteLaunchItem={onDeleteLaunchItem}
             onLaunchItem={onLaunchItem}
+            onMoveLaunchItem={onMoveLaunchItem}
           />
         </section>
 

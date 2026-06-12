@@ -3,7 +3,11 @@ import { AppShell } from './components/AppShell';
 import { Sidebar } from './components/Sidebar';
 import { WorkflowDetail } from './components/WorkflowDetail';
 import { useWorkflows } from './hooks/useWorkflows';
-import type { CreateLaunchItemInput, LaunchItem } from './shared/types';
+import type {
+  CreateLaunchItemInput,
+  LaunchItem,
+  MoveLaunchItemDirection
+} from './shared/types';
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
@@ -115,6 +119,29 @@ export default function App() {
     }
   };
 
+  const handleMoveLaunchItem = async (
+    launchItem: LaunchItem,
+    direction: MoveLaunchItemDirection
+  ) => {
+    if (!selectedWorkflow) {
+      setError('Select a workflow before moving an item.');
+      return;
+    }
+
+    try {
+      const updatedWorkflow = await window.studyLauncher.moveLaunchItem(
+        selectedWorkflow.id,
+        launchItem.id,
+        direction
+      );
+
+      replaceWorkflow(updatedWorkflow);
+      setError('');
+    } catch (requestError) {
+      setError(getErrorMessage(requestError) || 'Failed to move launch item.');
+    }
+  };
+
   const handleDeleteLaunchItem = async (launchItem: LaunchItem) => {
     if (!selectedWorkflow) {
       setError('Select a workflow before deleting an item.');
@@ -172,6 +199,7 @@ export default function App() {
           onDeleteWorkflow={deleteWorkflow}
           onError={setError}
           onLaunchItem={handleLaunchItem}
+          onMoveLaunchItem={handleMoveLaunchItem}
           onStartStudy={handleStartStudy}
           onUpdateWorkflow={updateWorkflow}
         />

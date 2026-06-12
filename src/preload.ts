@@ -3,6 +3,7 @@ import type {
   CreateLaunchItemInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
+  MoveLaunchItemDirection,
   UpdateWorkflowInput
 } from './shared/types';
 
@@ -23,6 +24,16 @@ contextBridge.exposeInMainWorld('studyLauncher', {
     ipcRenderer.invoke('launch-items:add-url', workflowId, input),
   launchLaunchItem: (workflowId: string, launchItemId: string) =>
     ipcRenderer.invoke('launch-items:launch', workflowId, launchItemId),
+  moveLaunchItem: (
+    workflowId: string,
+    launchItemId: string,
+    direction: MoveLaunchItemDirection
+  ) => ipcRenderer.invoke(
+    'launch-items:move',
+    workflowId,
+    launchItemId,
+    direction
+  ),
   launchUrlLaunchItem: (workflowId: string, launchItemId: string) =>
     ipcRenderer.invoke('launch-items:launch-url', workflowId, launchItemId),
   deleteLaunchItem: (workflowId: string, launchItemId: string) =>

@@ -2,6 +2,7 @@ import type {
   CreateLaunchItemInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
+  MoveLaunchItemDirection,
   PickPathResult,
   UpdateWorkflowInput,
   Workflow
@@ -32,6 +33,11 @@ declare global {
         workflowId: string,
         launchItemId: string
       ): Promise<void>;
+      moveLaunchItem(
+        workflowId: string,
+        launchItemId: string,
+        direction: MoveLaunchItemDirection
+      ): Promise<Workflow>;
       launchUrlLaunchItem(
         workflowId: string,
         launchItemId: string
