@@ -520,10 +520,10 @@ button:disabled {
 
 .workflow-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, auto);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 22px;
-  padding: 22px 24px;
+  padding: 18px 22px;
 }
 
 .hero-copy {
@@ -532,9 +532,13 @@ button:disabled {
 
 .hero-title-row {
   justify-content: flex-start;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .hero-title-row h1 {
+  min-width: 0;
+  flex: 0 1 auto;
   overflow: hidden;
   color: #f8fbff;
   font-size: 28px;
@@ -545,29 +549,22 @@ button:disabled {
 }
 
 .icon-text-button {
+  flex: 0 0 auto;
   min-height: 30px;
   padding: 5px 10px;
   font-size: 12px;
 }
 
-.hero-copy p,
 .panel-header p {
   margin-top: 6px;
   color: var(--text-secondary);
   line-height: 1.45;
 }
 
-.hero-copy p {
-  overflow: hidden;
-  max-width: 760px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 .hero-meta {
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .hero-meta span {
@@ -580,12 +577,15 @@ button:disabled {
 }
 
 .hero-actions {
+  min-width: 0;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   gap: 16px;
 }
 
 .start-button {
   display: inline-flex;
+  flex: 0 1 336px;
   min-width: 224px;
   min-height: 58px;
   align-items: center;
@@ -626,6 +626,7 @@ button:disabled {
 
 .run-status {
   display: grid;
+  flex: 0 1 226px;
   min-width: 152px;
   grid-template-columns: minmax(0, 1fr) 10px;
   align-items: center;
@@ -910,12 +911,29 @@ button:disabled {
   }
 
   .workflow-hero {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    gap: 14px;
+    padding: 16px 18px;
   }
 
   .hero-actions {
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .start-button {
+    flex-basis: 188px;
+    min-width: 176px;
+    min-height: 48px;
+    padding: 11px 14px;
+    font-size: 16px;
+  }
+
+  .run-status {
+    flex-basis: 132px;
+    min-width: 132px;
+    padding: 10px 12px;
   }
 
   .dashboard-grid {
@@ -989,20 +1007,43 @@ button:disabled {
 }
 
 @media (max-width: 720px) {
-  .hero-actions,
   .launch-actions,
   .form-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
+  .workflow-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(282px, 328px);
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .hero-title-row {
+    gap: 6px;
+  }
+
+  .hero-title-row h1 {
+    font-size: 22px;
+  }
+
+  .icon-text-button {
+    padding-inline: 8px;
+  }
+
   .start-button {
-    width: 100%;
-    min-width: 0;
+    flex-basis: 150px;
+    min-width: 150px;
+    min-height: 42px;
+    padding: 9px 10px;
+    font-size: 14px;
   }
 
   .run-status {
-    width: 100%;
+    flex-basis: 122px;
+    min-width: 122px;
+    gap: 4px 8px;
+    padding: 9px 10px;
   }
 
   .launch-item-form {

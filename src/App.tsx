@@ -410,10 +410,6 @@ export default function App() {
                       Delete
                     </button>
                   </div>
-                  <p>
-                    {selectedWorkflow.description ||
-                      'No description yet. Add URLs below to build the launch order.'}
-                  </p>
                   <div className="hero-meta">
                     <span>{urlLaunchItems.length} URL launch items</span>
                     <span>{enabledLaunchItems.length} enabled</span>
@@ -428,7 +424,7 @@ export default function App() {
                     onClick={handleStartStudy}
                   >
                     <span className="play-glyph" aria-hidden="true" />
-                    {isStarting ? 'Opening URLs' : 'Start Study'}
+                    {isStarting ? 'Opening URLs' : 'Start'}
                   </button>
 
                   <div className="run-status">
