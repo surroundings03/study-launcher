@@ -17,12 +17,6 @@ export function AppShell({ sidebar, children }: AppShellProps) {
         </div>
         <div className="topbar-actions" aria-label="Application tools">
           <button className="toolbar-button" type="button" disabled>
-            Import
-          </button>
-          <button className="toolbar-button" type="button" disabled>
-            Export
-          </button>
-          <button className="toolbar-button" type="button" disabled>
             Settings
           </button>
         </div>
