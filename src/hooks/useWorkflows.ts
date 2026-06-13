@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type {
+  ActiveSession,
+  AppData,
   CreateWorkflowInput,
   UpdateWorkflowInput,
   Workflow
@@ -13,6 +15,7 @@ export const useWorkflows = () => {
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(
     null
   );
+  const [activeSession, setActiveSession] = useState<ActiveSession>(null);
   const [error, setError] = useState('');
 
   const selectedWorkflow = useMemo(
@@ -21,12 +24,26 @@ export const useWorkflows = () => {
     [selectedWorkflowId, workflows]
   );
 
+  const applyAppData = (appData: AppData) => {
+    setWorkflows(appData.workflows);
+    setActiveSession(appData.activeSession);
+    setSelectedWorkflowId((currentWorkflowId) => {
+      if (
+        currentWorkflowId &&
+        appData.workflows.some((workflow) => workflow.id === currentWorkflowId)
+      ) {
+        return currentWorkflowId;
+      }
+
+      return appData.workflows[0]?.id ?? null;
+    });
+  };
+
   useEffect(() => {
-    window.studyLauncher
-      .getWorkflows()
-      .then((storedWorkflows) => {
-        setWorkflows(storedWorkflows);
-        setSelectedWorkflowId(storedWorkflows[0]?.id ?? null);
+    window.nodeStart
+      .getAppData()
+      .then((storedAppData) => {
+        applyAppData(storedAppData);
       })
       .catch((requestError) => {
         setError(getErrorMessage(requestError) || 'Failed to load workflows.');
@@ -42,7 +59,7 @@ export const useWorkflows = () => {
     input: CreateWorkflowInput
   ): Promise<Workflow | null> => {
     try {
-      const workflow = await window.studyLauncher.createWorkflow(input);
+      const workflow = await window.nodeStart.createWorkflow(input);
 
       setWorkflows((currentWorkflows) => [...currentWorkflows, workflow]);
       setSelectedWorkflowId(workflow.id);
@@ -60,7 +77,7 @@ export const useWorkflows = () => {
     input: UpdateWorkflowInput
   ): Promise<Workflow | null> => {
     try {
-      const updatedWorkflow = await window.studyLauncher.updateWorkflow(
+      const updatedWorkflow = await window.nodeStart.updateWorkflow(
         workflowId,
         input
       );
@@ -89,11 +106,15 @@ export const useWorkflows = () => {
     }
 
     try {
-      const nextWorkflows = await window.studyLauncher.deleteWorkflow(
+      const nextWorkflows = await window.nodeStart.deleteWorkflow(
         workflowToDelete.id
       );
+      const appData = await window.nodeStart.getAppData();
 
-      setWorkflows(nextWorkflows);
+      applyAppData({
+        ...appData,
+        workflows: nextWorkflows
+      });
 
       if (workflowToDelete.id === selectedWorkflowId) {
         setSelectedWorkflowId(nextWorkflows[0]?.id ?? null);
@@ -114,6 +135,8 @@ export const useWorkflows = () => {
   };
 
   return {
+    activeSession,
+    applyAppData,
     workflows,
     selectedWorkflow,
     selectedWorkflowId,
@@ -123,6 +146,7 @@ export const useWorkflows = () => {
     createWorkflow,
     updateWorkflow,
     deleteWorkflow,
-    replaceWorkflow
+    replaceWorkflow,
+    setActiveSession
   };
 };

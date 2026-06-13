@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import { registerWorkflowIpcHandlers } from './main/ipc';
-import { getAppData } from './main/store';
+import { getAppData, settleActiveSession } from './main/store';
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -9,6 +9,7 @@ if (require('electron-squirrel-startup')) {
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
+    title: 'nodeStart',
     width: 1180,
     height: 720,
     minWidth: 1024,
@@ -36,6 +37,14 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+app.on('before-quit', () => {
+  try {
+    settleActiveSession();
+  } catch (error) {
+    console.warn('Failed to settle active study session before quit.', error);
   }
 });
 

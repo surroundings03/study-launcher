@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react';
 import type {
+  ActiveSession,
   CreateLaunchItemInput,
   LaunchItem,
-  MoveLaunchItemDirection,
+  LaunchResult,
   UpdateWorkflowInput,
   Workflow
 } from '../shared/types';
 import { LaunchButton } from './LaunchButton';
 import { LaunchItemEditor } from './LaunchItemEditor';
 import { LaunchItemList } from './LaunchItemList';
+import { LaunchResultSummary } from './LaunchResultSummary';
 import { RecentCompletions } from './RecentCompletions';
 import { TaskList } from './TaskList';
 import { TimeStats } from './TimeStats';
@@ -16,8 +18,14 @@ import { WorkflowEditor } from './WorkflowEditor';
 
 type WorkflowDetailProps = {
   workflow: Workflow;
+  activeSession: ActiveSession;
+  activeWorkflowName: string | null;
+  currentElapsedSeconds: number;
   enabledLaunchItemCount: number;
-  isStarting: boolean;
+  isAnotherWorkflowRunning: boolean;
+  isLaunching: boolean;
+  isRunning: boolean;
+  launchResults: LaunchResult[];
   launchItems: LaunchItem[];
   onAddLaunchItem(
     input: CreateLaunchItemInput
@@ -26,11 +34,9 @@ type WorkflowDetailProps = {
   onDeleteWorkflow(workflow: Workflow): void;
   onError(message: string): void;
   onLaunchItem(launchItem: LaunchItem): void;
-  onMoveLaunchItem(
-    launchItem: LaunchItem,
-    direction: MoveLaunchItemDirection
-  ): void;
+  onReorderLaunchItems(orderedLaunchItemIds: string[]): void;
   onStartStudy(): void;
+  onStopStudy(): void;
   onUpdateWorkflow(
     workflowId: string,
     input: UpdateWorkflowInput
@@ -39,23 +45,30 @@ type WorkflowDetailProps = {
 
 export function WorkflowDetail({
   workflow,
+  activeSession,
+  activeWorkflowName,
+  currentElapsedSeconds,
   enabledLaunchItemCount,
-  isStarting,
+  isAnotherWorkflowRunning,
+  isLaunching,
+  isRunning,
+  launchResults,
   launchItems,
   onAddLaunchItem,
   onDeleteLaunchItem,
   onDeleteWorkflow,
   onError,
   onLaunchItem,
-  onMoveLaunchItem,
+  onReorderLaunchItems,
   onStartStudy,
+  onStopStudy,
   onUpdateWorkflow
 }: WorkflowDetailProps) {
   const [isAddItemFormOpen, setIsAddItemFormOpen] = useState(false);
   const [isEditingWorkflow, setIsEditingWorkflow] = useState(false);
   const isStartDisabled = useMemo(
-    () => enabledLaunchItemCount === 0 || isStarting,
-    [enabledLaunchItemCount, isStarting]
+    () => isLaunching,
+    [isLaunching]
   );
 
   return (
@@ -97,8 +110,12 @@ export function WorkflowDetail({
 
         <LaunchButton
           disabled={isStartDisabled}
-          isStarting={isStarting}
-          onStart={onStartStudy}
+          enabledLaunchItemCount={enabledLaunchItemCount}
+          isAnotherWorkflowRunning={isAnotherWorkflowRunning}
+          isLaunching={isLaunching}
+          isRunning={isRunning}
+          timerSeconds={currentElapsedSeconds}
+          onStart={isRunning ? onStopStudy : onStartStudy}
         />
       </section>
 
@@ -133,11 +150,19 @@ export function WorkflowDetail({
             launchItems={launchItems}
             onDeleteLaunchItem={onDeleteLaunchItem}
             onLaunchItem={onLaunchItem}
-            onMoveLaunchItem={onMoveLaunchItem}
+            onReorderLaunchItems={onReorderLaunchItems}
           />
+
+          <LaunchResultSummary launchResults={launchResults} />
         </section>
 
-        <TimeStats />
+        <TimeStats
+          activeSession={activeSession}
+          activeWorkflowName={activeWorkflowName}
+          currentElapsedSeconds={currentElapsedSeconds}
+          isWorkflowRunning={isRunning}
+          workflow={workflow}
+        />
         <TaskList />
         <RecentCompletions />
       </div>

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import type { CreateWorkflowInput, Workflow } from '../shared/types';
 
 type SidebarProps = {
+  activeWorkflowId: string | null;
   workflows: Workflow[];
   selectedWorkflowId: string | null;
   onCreateWorkflow(input: CreateWorkflowInput): Promise<Workflow | null>;
@@ -15,6 +16,7 @@ const getWorkflowInitial = (name: string): string =>
   name.trim().charAt(0).toUpperCase() || 'S';
 
 export function Sidebar({
+  activeWorkflowId,
   workflows,
   selectedWorkflowId,
   onCreateWorkflow,
@@ -102,11 +104,18 @@ export function Sidebar({
         {workflows.length > 0 ? (
           workflows.map((workflow) => {
             const isSelected = workflow.id === selectedWorkflowId;
+            const isRunning = workflow.id === activeWorkflowId;
             const launchItemCount = workflow.items.length;
 
             return (
               <div
-                className={isSelected ? 'workflow-row selected' : 'workflow-row'}
+                className={[
+                  'workflow-row',
+                  isSelected ? 'selected' : '',
+                  isRunning ? 'running' : ''
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 key={workflow.id}
               >
                 <button
@@ -120,10 +129,16 @@ export function Sidebar({
                   <span className="workflow-copy">
                     <strong>{workflow.name}</strong>
                     <span>
+                      {isRunning ? 'Running · ' : ''}
                       {launchItemCount} launch item
                       {launchItemCount === 1 ? '' : 's'}
                     </span>
                   </span>
+                  {isRunning && (
+                    <span className="running-pill" aria-label="Running">
+                      Running
+                    </span>
+                  )}
                 </button>
                 <button
                   className="row-action danger"

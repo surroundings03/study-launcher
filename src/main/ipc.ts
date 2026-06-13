@@ -4,17 +4,27 @@ import { randomUUID } from 'node:crypto';
 import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type {
+  AppData,
   CreateLaunchItemInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
   LaunchItem,
+  LaunchResult,
+  LaunchWorkflowResult,
   LaunchItemType,
-  MoveLaunchItemDirection,
   PickPathResult,
   UpdateWorkflowInput,
   Workflow
 } from '../shared/types';
-import { getWorkflows, saveWorkflows } from './store';
+import {
+  getActiveSession,
+  getAppData,
+  saveActiveSession,
+  saveWorkflows,
+  settleActiveSession,
+  startActiveSession,
+  getWorkflows
+} from './store';
 
 type IpcHandler<TArgs extends unknown[], TResult> = (
   ...args: TArgs
@@ -27,8 +37,15 @@ const launchItemTypes = new Set<LaunchItemType>([
   'app'
 ]);
 
+const LAUNCH_ITEM_DELAY_MS = 1000;
+
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
+
+const wait = (milliseconds: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
 
 const handleIpc = <TArgs extends unknown[], TResult>(
   channel: string,
@@ -310,13 +327,12 @@ const getLaunchItem = (workflowId: string, launchItemId: string) => {
   return launchItem;
 };
 
-const moveLaunchItemInWorkflow = (
+const reorderLaunchItemsInWorkflow = (
   workflowId: string,
-  launchItemId: string,
-  direction: MoveLaunchItemDirection
+  orderedLaunchItemIds: string[]
 ): Workflow => {
-  if (direction !== 'up' && direction !== 'down') {
-    throw new Error('Move direction is invalid.');
+  if (!Array.isArray(orderedLaunchItemIds)) {
+    throw new Error('Launch item order is invalid.');
   }
 
   const workflows = getNormalizedWorkflows();
@@ -328,31 +344,58 @@ const moveLaunchItemInWorkflow = (
 
   const workflow = workflows[workflowIndex];
   const orderedItems = normalizeLaunchItemOrders(workflow.items);
-  const itemIndex = orderedItems.findIndex((item) => item.id === launchItemId);
+  const knownItemIds = new Set(orderedItems.map((item) => item.id));
+  const requestedItemIds = new Set<string>();
 
-  if (itemIndex === -1) {
-    throw new Error('Launch item not found.');
+  if (orderedLaunchItemIds.length !== orderedItems.length) {
+    throw new Error('Launch item order is incomplete.');
   }
 
-  const targetIndex = direction === 'up' ? itemIndex - 1 : itemIndex + 1;
+  for (const itemId of orderedLaunchItemIds) {
+    if (typeof itemId !== 'string' || !itemId) {
+      throw new Error('Launch item order is invalid.');
+    }
 
-  if (targetIndex < 0 || targetIndex >= orderedItems.length) {
+    if (requestedItemIds.has(itemId)) {
+      throw new Error('Launch item order contains duplicate items.');
+    }
+
+    if (!knownItemIds.has(itemId)) {
+      throw new Error(
+        'Launch item order contains an item outside this workflow.'
+      );
+    }
+
+    requestedItemIds.add(itemId);
+  }
+
+  if (requestedItemIds.size !== knownItemIds.size) {
+    throw new Error('Launch item order is incomplete.');
+  }
+
+  const itemById = new Map(orderedItems.map((item) => [item.id, item]));
+  const nextItems = orderedLaunchItemIds.map((itemId) => {
+    const item = itemById.get(itemId);
+
+    if (!item) {
+      throw new Error('Launch item not found.');
+    }
+
+    return item;
+  });
+  const normalizedItems = assignLaunchItemOrders(nextItems);
+
+  if (!didLaunchItemOrderChange(workflow.items, normalizedItems)) {
     return {
       ...workflow,
-      items: orderedItems
+      items: normalizedItems
     };
   }
-
-  const nextItems = [...orderedItems];
-  [nextItems[itemIndex], nextItems[targetIndex]] = [
-    nextItems[targetIndex],
-    nextItems[itemIndex]
-  ];
 
   const now = new Date().toISOString();
   const updatedWorkflow: Workflow = {
     ...workflow,
-    items: assignLaunchItemOrders(nextItems),
+    items: normalizedItems,
     updatedAt: now
   };
   const nextWorkflows = [...workflows];
@@ -363,12 +406,7 @@ const moveLaunchItemInWorkflow = (
   return updatedWorkflow;
 };
 
-const launchItem = async (
-  workflowId: string,
-  launchItemId: string
-): Promise<void> => {
-  const item = getLaunchItem(workflowId, launchItemId);
-
+const openLaunchItem = async (item: LaunchItem): Promise<void> => {
   if (!item.enabled) {
     throw new Error('Launch item is disabled.');
   }
@@ -388,6 +426,118 @@ const launchItem = async (
   if (openError) {
     throw new Error(`Unable to open launch item: ${openError}`);
   }
+};
+
+const launchItem = async (
+  workflowId: string,
+  launchItemId: string
+): Promise<void> => {
+  const item = getLaunchItem(workflowId, launchItemId);
+
+  await openLaunchItem(item);
+};
+
+const launchWorkflow = async (
+  workflowId: string
+): Promise<LaunchWorkflowResult> => {
+  const activeSession = getActiveSession();
+
+  if (activeSession) {
+    if (activeSession.workflowId === workflowId) {
+      return {
+        launchResults: [],
+        started: true,
+        activeSession,
+        message: 'Study session is already running.'
+      };
+    }
+
+    return {
+      launchResults: [],
+      started: false,
+      activeSession,
+      message: 'Stop the active workflow before starting another one.'
+    };
+  }
+
+  const workflow = getNormalizedWorkflows().find(
+    (currentWorkflow) => currentWorkflow.id === workflowId
+  );
+
+  if (!workflow) {
+    throw new Error('Workflow not found.');
+  }
+
+  if (workflow.items.length === 0) {
+    return {
+      launchResults: [],
+      started: false,
+      message: 'No enabled launch items.'
+    };
+  }
+
+  const enabledLaunchItems = normalizeLaunchItemOrders(workflow.items).filter(
+    (item) => item.enabled
+  );
+
+  if (enabledLaunchItems.length === 0) {
+    return {
+      launchResults: [],
+      started: false,
+      message: 'No enabled launch items.'
+    };
+  }
+
+  const launchResults: LaunchResult[] = [];
+
+  for (let index = 0; index < enabledLaunchItems.length; index += 1) {
+    const item = enabledLaunchItems[index];
+
+    try {
+      await openLaunchItem(item);
+      launchResults.push({
+        title: item.title,
+        type: item.type,
+        target: item.target,
+        order: item.order,
+        success: true,
+        errorMessage: ''
+      });
+    } catch (error) {
+      launchResults.push({
+        title: item.title,
+        type: item.type,
+        target: item.target,
+        order: item.order,
+        success: false,
+        errorMessage: getErrorMessage(error)
+      });
+    }
+
+    if (index < enabledLaunchItems.length - 1) {
+      await wait(LAUNCH_ITEM_DELAY_MS);
+    }
+  }
+
+  const started = launchResults.some((result) => result.success);
+  const nextActiveSession = started
+    ? startActiveSession(workflowId).activeSession
+    : null;
+
+  return {
+    launchResults,
+    started,
+    activeSession: nextActiveSession,
+    message: started
+      ? undefined
+      : 'Unable to open any enabled launch items.'
+  };
+};
+
+const getNormalizedAppData = (): AppData => {
+  getNormalizedWorkflows();
+
+  return getAppData();
 };
 
 const pickPath = async (
@@ -415,6 +565,8 @@ const pickPath = async (
 
 export const registerWorkflowIpcHandlers = (): void => {
   handleIpc('workflows:get', () => getNormalizedWorkflows());
+
+  handleIpc('app-data:get', getNormalizedAppData);
 
   handleIpc('workflows:create', (input: CreateWorkflowInput) => {
     const workflow = createWorkflow(input);
@@ -457,6 +609,12 @@ export const registerWorkflowIpcHandlers = (): void => {
     }
 
     saveWorkflows(nextWorkflows);
+
+    const activeSession = getActiveSession();
+
+    if (activeSession?.workflowId === workflowId) {
+      saveActiveSession(null);
+    }
 
     return nextWorkflows;
   });
@@ -503,13 +661,16 @@ export const registerWorkflowIpcHandlers = (): void => {
 
   handleIpc('launch-items:launch', launchItem);
 
+  handleIpc('workflows:launch', launchWorkflow);
+
+  handleIpc('study-session:stop', (workflowId: string) =>
+    settleActiveSession(workflowId)
+  );
+
   handleIpc(
-    'launch-items:move',
-    (
-      workflowId: string,
-      launchItemId: string,
-      direction: MoveLaunchItemDirection
-    ) => moveLaunchItemInWorkflow(workflowId, launchItemId, direction)
+    'launch-items:reorder',
+    (workflowId: string, orderedLaunchItemIds: string[]) =>
+      reorderLaunchItemsInWorkflow(workflowId, orderedLaunchItemIds)
   );
 
   handleIpc(

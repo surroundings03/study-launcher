@@ -1,7 +1,5 @@
 export type LaunchItemType = "url" | "file" | "folder" | "app";
 
-export type MoveLaunchItemDirection = "up" | "down";
-
 export type LaunchItem = {
   id: string;
   title: string;
@@ -90,3 +88,19 @@ export type PickPathResult =
       path: string;
       title: string;
     };
+
+export type LaunchResult = {
+  title: string;
+  type: LaunchItemType;
+  target: string;
+  order: number;
+  success: boolean;
+  errorMessage: string;
+};
+
+export type LaunchWorkflowResult = {
+  launchResults: LaunchResult[];
+  started: boolean;
+  activeSession?: ActiveSession;
+  message?: string;
+};

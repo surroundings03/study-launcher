@@ -1,6 +1,6 @@
 {
-  "name": "study-launcher",
-  "productName": "Study Launcher",
+  "name": "nodestart",
+  "productName": "nodeStart",
   "version": "1.0.0",
   "description": "A minimal Electron Forge app.",
   "main": ".vite/build/main.js",

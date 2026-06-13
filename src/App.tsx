@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from './components/AppShell';
 import { Sidebar } from './components/Sidebar';
 import { WorkflowDetail } from './components/WorkflowDetail';
 import { useWorkflows } from './hooks/useWorkflows';
 import type {
+  ActiveSession,
   CreateLaunchItemInput,
   LaunchItem,
-  MoveLaunchItemDirection
+  LaunchResult
 } from './shared/types';
 
 const getErrorMessage = (error: unknown): string =>
@@ -21,8 +22,38 @@ const sortLaunchItemsByOrder = (items: LaunchItem[]): LaunchItem[] =>
     return firstItem.createdAt.localeCompare(secondItem.createdAt);
   });
 
+const sortLaunchResultsByOrder = (
+  launchResults: LaunchResult[]
+): LaunchResult[] =>
+  [...launchResults].sort((firstResult, secondResult) => {
+    if (firstResult.order !== secondResult.order) {
+      return firstResult.order - secondResult.order;
+    }
+
+    return firstResult.title.localeCompare(secondResult.title);
+  });
+
+const getElapsedSeconds = (
+  activeSession: ActiveSession,
+  nowMs: number
+): number => {
+  if (!activeSession) {
+    return 0;
+  }
+
+  const startedAtMs = new Date(activeSession.startedAt).getTime();
+
+  if (!Number.isFinite(startedAtMs)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.floor((nowMs - startedAtMs) / 1000));
+};
+
 export default function App() {
   const {
+    activeSession,
+    applyAppData,
     workflows,
     selectedWorkflow,
     selectedWorkflowId,
@@ -32,9 +63,14 @@ export default function App() {
     createWorkflow,
     updateWorkflow,
     deleteWorkflow,
-    replaceWorkflow
+    replaceWorkflow,
+    setActiveSession
   } = useWorkflows();
-  const [isStarting, setIsStarting] = useState(false);
+  const [launchingWorkflowId, setLaunchingWorkflowId] = useState<string | null>(
+    null
+  );
+  const [launchResults, setLaunchResults] = useState<LaunchResult[]>([]);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const launchItems = useMemo(
     () =>
@@ -50,6 +86,39 @@ export default function App() {
     () => launchItems.filter((launchItem) => launchItem.enabled),
     [launchItems]
   );
+  const activeWorkflow = useMemo(
+    () =>
+      activeSession
+        ? workflows.find((workflow) => workflow.id === activeSession.workflowId) ??
+          null
+        : null,
+    [activeSession, workflows]
+  );
+  const activeElapsedSeconds = getElapsedSeconds(activeSession, nowMs);
+  const isSelectedWorkflowRunning =
+    Boolean(selectedWorkflow) &&
+    activeSession?.workflowId === selectedWorkflow?.id;
+  const isAnotherWorkflowRunning =
+    Boolean(activeSession) && !isSelectedWorkflowRunning;
+  const isSelectedWorkflowLaunching =
+    Boolean(selectedWorkflow) &&
+    launchingWorkflowId === selectedWorkflow?.id;
+
+  useEffect(() => {
+    if (!activeSession) {
+      return undefined;
+    }
+
+    setNowMs(Date.now());
+
+    const intervalId = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [activeSession]);
 
   const handleAddLaunchItem = async (input: CreateLaunchItemInput) => {
     if (!selectedWorkflow) {
@@ -58,7 +127,7 @@ export default function App() {
     }
 
     try {
-      const updatedWorkflow = await window.studyLauncher.addLaunchItem(
+      const updatedWorkflow = await window.nodeStart.addLaunchItem(
         selectedWorkflow.id,
         input
       );
@@ -80,7 +149,7 @@ export default function App() {
     }
 
     try {
-      await window.studyLauncher.launchLaunchItem(
+      await window.nodeStart.launchLaunchItem(
         selectedWorkflow.id,
         launchItem.id
       );
@@ -96,49 +165,104 @@ export default function App() {
       return;
     }
 
-    if (enabledLaunchItems.length === 0) {
-      setError('Add an enabled launch item before starting study.');
+    if (launchingWorkflowId) {
+      setError('Wait for the current launch to finish.');
       return;
     }
 
-    setIsStarting(true);
+    if (activeSession) {
+      if (activeSession.workflowId === selectedWorkflow.id) {
+        try {
+          const appData = await window.nodeStart.stopActiveSession(
+            selectedWorkflow.id
+          );
 
-    try {
-      for (const launchItem of enabledLaunchItems) {
-        await window.studyLauncher.launchLaunchItem(
-          selectedWorkflow.id,
-          launchItem.id
-        );
+          applyAppData(appData);
+          setError('');
+        } catch (requestError) {
+          setError(
+            getErrorMessage(requestError) || 'Failed to stop study session.'
+          );
+        }
+
+        return;
       }
 
-      setError('');
+      setError(
+        activeWorkflow
+          ? `Stop "${activeWorkflow.name}" before starting another workflow.`
+          : 'Stop the active workflow before starting another one.'
+      );
+      return;
+    }
+
+    if (enabledLaunchItems.length === 0) {
+      setLaunchResults([]);
+      setError('No enabled launch items.');
+      return;
+    }
+
+    setLaunchingWorkflowId(selectedWorkflow.id);
+    setLaunchResults([]);
+
+    try {
+      const launchResult = await window.nodeStart.launchWorkflow(
+        selectedWorkflow.id
+      );
+
+      setLaunchResults(sortLaunchResultsByOrder(launchResult.launchResults));
+      setActiveSession(launchResult.activeSession ?? null);
+      setError(launchResult.message ?? '');
     } catch (requestError) {
       setError(getErrorMessage(requestError) || 'Failed to start study.');
+      setActiveSession(null);
+      setLaunchResults([]);
     } finally {
-      setIsStarting(false);
+      setLaunchingWorkflowId(null);
     }
   };
 
-  const handleMoveLaunchItem = async (
-    launchItem: LaunchItem,
-    direction: MoveLaunchItemDirection
-  ) => {
+  const handleStopStudy = async () => {
     if (!selectedWorkflow) {
-      setError('Select a workflow before moving an item.');
+      setError('Select a workflow before stopping study.');
+      return;
+    }
+
+    if (!isSelectedWorkflowRunning) {
+      setError('');
       return;
     }
 
     try {
-      const updatedWorkflow = await window.studyLauncher.moveLaunchItem(
+      const appData = await window.nodeStart.stopActiveSession(
+        selectedWorkflow.id
+      );
+
+      applyAppData(appData);
+      setError('');
+    } catch (requestError) {
+      setError(getErrorMessage(requestError) || 'Failed to stop study.');
+    }
+  };
+
+  const handleReorderLaunchItems = async (orderedLaunchItemIds: string[]) => {
+    if (!selectedWorkflow) {
+      setError('Select a workflow before reordering items.');
+      return;
+    }
+
+    try {
+      const updatedWorkflow = await window.nodeStart.reorderLaunchItems(
         selectedWorkflow.id,
-        launchItem.id,
-        direction
+        orderedLaunchItemIds
       );
 
       replaceWorkflow(updatedWorkflow);
       setError('');
     } catch (requestError) {
-      setError(getErrorMessage(requestError) || 'Failed to move launch item.');
+      setError(
+        getErrorMessage(requestError) || 'Failed to reorder launch items.'
+      );
     }
   };
 
@@ -157,7 +281,7 @@ export default function App() {
     }
 
     try {
-      const updatedWorkflow = await window.studyLauncher.deleteLaunchItem(
+      const updatedWorkflow = await window.nodeStart.deleteLaunchItem(
         selectedWorkflow.id,
         launchItem.id
       );
@@ -173,6 +297,7 @@ export default function App() {
     <AppShell
       sidebar={
         <Sidebar
+          activeWorkflowId={activeSession?.workflowId ?? null}
           workflows={workflows}
           selectedWorkflowId={selectedWorkflowId}
           onCreateWorkflow={createWorkflow}
@@ -191,16 +316,23 @@ export default function App() {
       {selectedWorkflow ? (
         <WorkflowDetail
           workflow={selectedWorkflow}
+          activeSession={activeSession}
+          activeWorkflowName={activeWorkflow?.name ?? null}
+          currentElapsedSeconds={activeElapsedSeconds}
           enabledLaunchItemCount={enabledLaunchItems.length}
-          isStarting={isStarting}
+          isAnotherWorkflowRunning={isAnotherWorkflowRunning}
+          isLaunching={isSelectedWorkflowLaunching}
+          isRunning={isSelectedWorkflowRunning}
+          launchResults={launchResults}
           launchItems={launchItems}
           onAddLaunchItem={handleAddLaunchItem}
           onDeleteLaunchItem={handleDeleteLaunchItem}
           onDeleteWorkflow={deleteWorkflow}
           onError={setError}
           onLaunchItem={handleLaunchItem}
-          onMoveLaunchItem={handleMoveLaunchItem}
+          onReorderLaunchItems={handleReorderLaunchItems}
           onStartStudy={handleStartStudy}
+          onStopStudy={handleStopStudy}
           onUpdateWorkflow={updateWorkflow}
         />
       ) : (

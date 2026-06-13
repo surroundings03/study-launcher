@@ -76,11 +76,11 @@ export function LaunchItemEditor({
       let result: PickPathResult;
 
       if (itemType === 'folder') {
-        result = await window.studyLauncher.pickFolder();
+        result = await window.nodeStart.pickFolder();
       } else if (itemType === 'app') {
-        result = await window.studyLauncher.pickApp();
+        result = await window.nodeStart.pickApp();
       } else {
-        result = await window.studyLauncher.pickFile();
+        result = await window.nodeStart.pickFile();
       }
 
       if (result.canceled === true) {

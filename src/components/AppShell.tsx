@@ -11,9 +11,9 @@ export function AppShell({ sidebar, children }: AppShellProps) {
       <header className="topbar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">
-            SL
+            NS
           </span>
-          <span className="brand-name">Study Launcher</span>
+          <span className="brand-name">nodeStart</span>
         </div>
         <div className="topbar-actions" aria-label="Application tools">
           <button className="toolbar-button" type="button" disabled>

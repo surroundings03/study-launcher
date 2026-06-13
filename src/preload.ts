@@ -3,11 +3,11 @@ import type {
   CreateLaunchItemInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
-  MoveLaunchItemDirection,
   UpdateWorkflowInput
 } from './shared/types';
 
-contextBridge.exposeInMainWorld('studyLauncher', {
+contextBridge.exposeInMainWorld('nodeStart', {
+  getAppData: () => ipcRenderer.invoke('app-data:get'),
   getWorkflows: () => ipcRenderer.invoke('workflows:get'),
   createWorkflow: (input: CreateWorkflowInput) =>
     ipcRenderer.invoke('workflows:create', input),
@@ -24,16 +24,19 @@ contextBridge.exposeInMainWorld('studyLauncher', {
     ipcRenderer.invoke('launch-items:add-url', workflowId, input),
   launchLaunchItem: (workflowId: string, launchItemId: string) =>
     ipcRenderer.invoke('launch-items:launch', workflowId, launchItemId),
-  moveLaunchItem: (
+  launchWorkflow: (workflowId: string) =>
+    ipcRenderer.invoke('workflows:launch', workflowId),
+  stopActiveSession: (workflowId: string) =>
+    ipcRenderer.invoke('study-session:stop', workflowId),
+  reorderLaunchItems: (
     workflowId: string,
-    launchItemId: string,
-    direction: MoveLaunchItemDirection
-  ) => ipcRenderer.invoke(
-    'launch-items:move',
-    workflowId,
-    launchItemId,
-    direction
-  ),
+    orderedLaunchItemIds: string[]
+  ) =>
+    ipcRenderer.invoke(
+      'launch-items:reorder',
+      workflowId,
+      orderedLaunchItemIds
+    ),
   launchUrlLaunchItem: (workflowId: string, launchItemId: string) =>
     ipcRenderer.invoke('launch-items:launch-url', workflowId, launchItemId),
   deleteLaunchItem: (workflowId: string, launchItemId: string) =>

@@ -1,8 +1,9 @@
 import type {
+  AppData,
   CreateLaunchItemInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
-  MoveLaunchItemDirection,
+  LaunchWorkflowResult,
   PickPathResult,
   UpdateWorkflowInput,
   Workflow
@@ -10,7 +11,8 @@ import type {
 
 declare global {
   interface Window {
-    studyLauncher: {
+    nodeStart: {
+      getAppData(): Promise<AppData>;
       getWorkflows(): Promise<Workflow[]>;
       createWorkflow(input: CreateWorkflowInput): Promise<Workflow>;
       updateWorkflow(
@@ -33,10 +35,11 @@ declare global {
         workflowId: string,
         launchItemId: string
       ): Promise<void>;
-      moveLaunchItem(
+      launchWorkflow(workflowId: string): Promise<LaunchWorkflowResult>;
+      stopActiveSession(workflowId: string): Promise<AppData>;
+      reorderLaunchItems(
         workflowId: string,
-        launchItemId: string,
-        direction: MoveLaunchItemDirection
+        orderedLaunchItemIds: string[]
       ): Promise<Workflow>;
       launchUrlLaunchItem(
         workflowId: string,

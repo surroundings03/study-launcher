@@ -1,23 +1,144 @@
-import type { LaunchItem, MoveLaunchItemDirection } from '../shared/types';
+import { useState, type DragEvent } from 'react';
+import type { LaunchItem } from '../shared/types';
+
+type DropPosition = 'before' | 'after';
 
 type LaunchItemListProps = {
   launchItems: LaunchItem[];
   onDeleteLaunchItem(launchItem: LaunchItem): void;
   onLaunchItem(launchItem: LaunchItem): void;
-  onMoveLaunchItem(
-    launchItem: LaunchItem,
-    direction: MoveLaunchItemDirection
-  ): void;
+  onReorderLaunchItems(orderedLaunchItemIds: string[]): void;
 };
 
 const formatOrder = (index: number): string => `[${index + 1}]`;
+
+const getDropPosition = (event: DragEvent<HTMLElement>): DropPosition => {
+  const rowBounds = event.currentTarget.getBoundingClientRect();
+  const rowMiddle = rowBounds.top + rowBounds.height / 2;
+
+  return event.clientY < rowMiddle ? 'before' : 'after';
+};
+
+const getReorderedLaunchItemIds = (
+  launchItems: LaunchItem[],
+  sourceItemId: string,
+  targetItemId: string,
+  dropPosition: DropPosition
+): string[] | null => {
+  if (sourceItemId === targetItemId) {
+    return null;
+  }
+
+  const orderedLaunchItemIds = launchItems.map((launchItem) => launchItem.id);
+  const sourceIndex = orderedLaunchItemIds.indexOf(sourceItemId);
+  const targetIndex = orderedLaunchItemIds.indexOf(targetItemId);
+
+  if (sourceIndex === -1 || targetIndex === -1) {
+    return null;
+  }
+
+  const nextLaunchItemIds = [...orderedLaunchItemIds];
+  const [movedItemId] = nextLaunchItemIds.splice(sourceIndex, 1);
+  const adjustedTargetIndex =
+    sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+  const insertIndex =
+    dropPosition === 'before' ? adjustedTargetIndex : adjustedTargetIndex + 1;
+  const safeInsertIndex = Math.max(
+    0,
+    Math.min(nextLaunchItemIds.length, insertIndex)
+  );
+
+  nextLaunchItemIds.splice(safeInsertIndex, 0, movedItemId);
+
+  const didOrderChange = nextLaunchItemIds.some(
+    (launchItemId, index) => launchItemId !== orderedLaunchItemIds[index]
+  );
+
+  return didOrderChange ? nextLaunchItemIds : null;
+};
 
 export function LaunchItemList({
   launchItems,
   onDeleteLaunchItem,
   onLaunchItem,
-  onMoveLaunchItem
+  onReorderLaunchItems
 }: LaunchItemListProps) {
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+  const [dragOverPosition, setDragOverPosition] =
+    useState<DropPosition>('before');
+
+  const resetDragState = () => {
+    setDraggingItemId(null);
+    setDragOverItemId(null);
+    setDragOverPosition('before');
+  };
+
+  const handleDragStart = (
+    event: DragEvent<HTMLElement>,
+    launchItemId: string
+  ) => {
+    setDraggingItemId(launchItemId);
+    setDragOverItemId(null);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', launchItemId);
+  };
+
+  const handleDragOver = (
+    event: DragEvent<HTMLElement>,
+    launchItemId: string
+  ) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+
+    const nextDropPosition = getDropPosition(event);
+
+    setDragOverItemId((currentItemId) =>
+      currentItemId === launchItemId ? currentItemId : launchItemId
+    );
+    setDragOverPosition((currentPosition) =>
+      currentPosition === nextDropPosition ? currentPosition : nextDropPosition
+    );
+  };
+
+  const handleDragLeave = (
+    event: DragEvent<HTMLElement>,
+    launchItemId: string
+  ) => {
+    const nextTarget = event.relatedTarget;
+
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+      return;
+    }
+
+    setDragOverItemId((currentItemId) =>
+      currentItemId === launchItemId ? null : currentItemId
+    );
+  };
+
+  const handleDrop = (
+    event: DragEvent<HTMLElement>,
+    targetItemId: string
+  ) => {
+    event.preventDefault();
+
+    const sourceItemId =
+      draggingItemId || event.dataTransfer.getData('text/plain');
+    const nextDropPosition = getDropPosition(event);
+    const nextLaunchItemIds = getReorderedLaunchItemIds(
+      launchItems,
+      sourceItemId,
+      targetItemId,
+      nextDropPosition
+    );
+
+    resetDragState();
+
+    if (nextLaunchItemIds) {
+      onReorderLaunchItems(nextLaunchItemIds);
+    }
+  };
+
   if (launchItems.length === 0) {
     return (
       <div className="empty-state">
@@ -29,77 +150,84 @@ export function LaunchItemList({
 
   return (
     <div className="launch-list">
-      {launchItems.map((launchItem, index) => (
-        <article
-          className={launchItem.enabled ? 'launch-row' : 'launch-row disabled'}
-          key={launchItem.id}
-        >
-          <span className="order-badge" aria-label="Launch order">
-            {formatOrder(index)}
-          </span>
-          <div className="launch-main">
-            <div className="launch-title-line">
-              <strong>{launchItem.title}</strong>
-              <span className={`type-badge ${launchItem.type}`}>
-                {launchItem.type.toUpperCase()}
+      {launchItems.map((launchItem, index) => {
+        const rowClasses = [
+          'launch-row',
+          launchItem.enabled ? '' : 'disabled',
+          draggingItemId === launchItem.id ? 'dragging' : '',
+          dragOverItemId === launchItem.id &&
+          draggingItemId !== launchItem.id
+            ? `drag-over ${dragOverPosition}`
+            : ''
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        return (
+          <article
+            className={rowClasses}
+            draggable
+            key={launchItem.id}
+            onDragEnd={resetDragState}
+            onDragLeave={(event) => handleDragLeave(event, launchItem.id)}
+            onDragOver={(event) => handleDragOver(event, launchItem.id)}
+            onDragStart={(event) => handleDragStart(event, launchItem.id)}
+            onDrop={(event) => handleDrop(event, launchItem.id)}
+          >
+            <span
+              className="drag-handle"
+              aria-label={`Drag ${launchItem.title} to reorder`}
+              title="Drag to reorder"
+            >
+              ⋮⋮
+            </span>
+            <div className="launch-main">
+              <div className="launch-title-line">
+                <span className="order-badge" aria-label="Launch order">
+                  {formatOrder(index)}
+                </span>
+                <strong>{launchItem.title}</strong>
+                <span className={`type-badge ${launchItem.type}`}>
+                  {launchItem.type.toUpperCase()}
+                </span>
+              </div>
+              <span className="launch-target" title={launchItem.target}>
+                {launchItem.target}
               </span>
             </div>
-            <span className="launch-target" title={launchItem.target}>
-              {launchItem.target}
-            </span>
-          </div>
-          <div className="launch-actions">
-            <div className="order-actions" aria-label="Launch item order">
-              <button
-                className="order-button"
-                type="button"
-                disabled={index === 0}
-                onClick={() => onMoveLaunchItem(launchItem, 'up')}
-                title="Move up"
-                aria-label={`Move ${launchItem.title} up`}
+            <div className="launch-actions">
+              <span
+                className={
+                  launchItem.enabled
+                    ? 'toggle-indicator on'
+                    : 'toggle-indicator'
+                }
+                role="switch"
+                aria-checked={launchItem.enabled}
+                aria-disabled="true"
+                title="Enable state is read-only in this phase."
               >
-                ↑
+                <span aria-hidden="true" />
+              </span>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={!launchItem.enabled}
+                onClick={() => onLaunchItem(launchItem)}
+              >
+                Open
               </button>
               <button
-                className="order-button"
+                className="row-action danger"
                 type="button"
-                disabled={index === launchItems.length - 1}
-                onClick={() => onMoveLaunchItem(launchItem, 'down')}
-                title="Move down"
-                aria-label={`Move ${launchItem.title} down`}
+                onClick={() => onDeleteLaunchItem(launchItem)}
               >
-                ↓
+                Delete
               </button>
             </div>
-            <span
-              className={
-                launchItem.enabled ? 'toggle-indicator on' : 'toggle-indicator'
-              }
-              role="switch"
-              aria-checked={launchItem.enabled}
-              aria-disabled="true"
-              title="Enable state is read-only in this phase."
-            >
-              <span aria-hidden="true" />
-            </span>
-            <button
-              className="secondary-button"
-              type="button"
-              disabled={!launchItem.enabled}
-              onClick={() => onLaunchItem(launchItem)}
-            >
-              Open
-            </button>
-            <button
-              className="row-action danger"
-              type="button"
-              onClick={() => onDeleteLaunchItem(launchItem)}
-            >
-              Delete
-            </button>
-          </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 }
