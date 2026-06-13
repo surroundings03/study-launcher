@@ -52,3 +52,9 @@ contextBridge.exposeInMainWorld('nodeStart', {
   deleteTask: (workflowId: string, taskId: string) =>
     ipcRenderer.invoke('tasks:delete', workflowId, taskId)
 });
+
+contextBridge.exposeInMainWorld('windowControls', {
+  minimize: () => ipcRenderer.invoke('window:minimize'),
+  toggleMaximize: () => ipcRenderer.invoke('window:toggle-maximize'),
+  close: () => ipcRenderer.invoke('window:close')
+});

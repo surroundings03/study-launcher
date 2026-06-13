@@ -14,12 +14,10 @@ export function WorkflowEditor({
   onSave
 }: WorkflowEditorProps) {
   const [name, setName] = useState(workflow.name);
-  const [description, setDescription] = useState(workflow.description);
   const [validationError, setValidationError] = useState('');
 
   useEffect(() => {
     setName(workflow.name);
-    setDescription(workflow.description);
     setValidationError('');
   }, [workflow]);
 
@@ -35,7 +33,7 @@ export function WorkflowEditor({
 
     const updatedWorkflow = await onSave({
       name: trimmedName,
-      description
+      description: workflow.description ?? ''
     });
 
     if (updatedWorkflow) {
@@ -54,15 +52,6 @@ export function WorkflowEditor({
             setValidationError('');
           }}
           placeholder="Workflow name"
-        />
-      </label>
-      <label className="field">
-        <span>Description</span>
-        <textarea
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          placeholder="Notes, resources, and AI tools"
-          rows={3}
         />
       </label>
       {validationError && (

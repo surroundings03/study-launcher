@@ -15,7 +15,7 @@
   --accent-2: #3b82f6;
   --accent-danger: #ef4444;
   --accent-warning: #facc15;
-  --shadow-panel: 0 18px 42px rgba(0, 0, 0, 0.3);
+  --shadow-panel: 0 12px 28px rgba(0, 0, 0, 0.2);
   --radius-panel: 10px;
   --radius-card: 8px;
 }
@@ -53,18 +53,25 @@ p {
 }
 
 button,
-input,
-textarea {
+input {
   font: inherit;
+  -webkit-app-region: no-drag;
 }
 
 button {
   border: 0;
 }
 
+label,
+select,
+a,
+.launch-row,
+.drag-handle {
+  -webkit-app-region: no-drag;
+}
+
 button:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
+input:focus-visible {
   outline: 2px solid rgba(50, 224, 196, 0.72);
   outline-offset: 2px;
 }
@@ -86,18 +93,19 @@ button:disabled {
 
 .topbar {
   display: flex;
-  min-height: 56px;
+  min-height: 50px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-  padding: 0 20px;
-  background: rgba(7, 12, 20, 0.78);
+  padding: 0 10px 0 18px;
+  background: rgba(7, 12, 20, 0.7);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  -webkit-app-region: drag;
 }
 
 .brand,
-.topbar-actions,
+.window-controls,
 .hero-actions,
 .form-actions,
 .launch-actions,
@@ -134,12 +142,13 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
-.topbar-actions {
+.window-controls {
+  align-self: stretch;
   flex: 0 0 auto;
-  gap: 8px;
+  gap: 0;
+  -webkit-app-region: no-drag;
 }
 
-.toolbar-button,
 .panel-action,
 .icon-text-button,
 .secondary-button,
@@ -165,7 +174,6 @@ button:disabled {
     transform 140ms ease;
 }
 
-.toolbar-button:not(:disabled):hover,
 .panel-action:not(:disabled):hover,
 .icon-text-button:not(:disabled):hover,
 .secondary-button:not(:disabled):hover,
@@ -174,6 +182,78 @@ button:disabled {
   border-color: var(--border-strong);
   color: var(--text-primary);
   background: rgba(31, 44, 63, 0.96);
+}
+
+.window-control {
+  display: grid;
+  width: 42px;
+  height: 100%;
+  min-height: 34px;
+  place-items: center;
+  border-radius: 0;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+  -webkit-app-region: no-drag;
+}
+
+.window-glyph {
+  position: relative;
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+.window-glyph::before,
+.window-glyph::after {
+  position: absolute;
+  content: "";
+}
+
+.window-glyph.minimize::before {
+  top: 7px;
+  left: 1px;
+  width: 10px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.window-glyph.maximize::before {
+  inset: 1px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+
+.window-glyph.close::before,
+.window-glyph.close::after {
+  top: 5px;
+  left: 0;
+  width: 12px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.window-glyph.close::before {
+  transform: rotate(45deg);
+}
+
+.window-glyph.close::after {
+  transform: rotate(-45deg);
+}
+
+.window-control:not(:disabled):hover {
+  color: var(--text-primary);
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.window-control.close:not(:disabled):hover {
+  color: #fff5f5;
+  background: rgba(239, 68, 68, 0.82);
 }
 
 .workspace {
@@ -269,8 +349,7 @@ button:disabled {
   font-weight: 650;
 }
 
-.field input,
-.field textarea {
+.field input {
   min-width: 0;
   border: 1px solid var(--border-subtle);
   border-radius: 7px;
@@ -279,13 +358,8 @@ button:disabled {
   background: rgba(7, 12, 20, 0.82);
 }
 
-.field input::placeholder,
-.field textarea::placeholder {
+.field input::placeholder {
   color: rgba(117, 131, 154, 0.78);
-}
-
-.field textarea {
-  resize: none;
 }
 
 .form-actions {
@@ -501,30 +575,26 @@ button:disabled {
 }
 
 .content::-webkit-scrollbar,
-.workflow-list::-webkit-scrollbar,
-.topbar-actions::-webkit-scrollbar {
+.workflow-list::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 .content::-webkit-scrollbar-track,
-.workflow-list::-webkit-scrollbar-track,
-.topbar-actions::-webkit-scrollbar-track {
+.workflow-list::-webkit-scrollbar-track {
   border-radius: 999px;
   background: rgba(7, 12, 20, 0.72);
 }
 
 .content::-webkit-scrollbar-thumb,
-.workflow-list::-webkit-scrollbar-thumb,
-.topbar-actions::-webkit-scrollbar-thumb {
+.workflow-list::-webkit-scrollbar-thumb {
   border: 2px solid rgba(7, 12, 20, 0.72);
   border-radius: 999px;
   background: rgba(100, 116, 139, 0.64);
 }
 
 .content::-webkit-scrollbar-thumb:hover,
-.workflow-list::-webkit-scrollbar-thumb:hover,
-.topbar-actions::-webkit-scrollbar-thumb:hover {
+.workflow-list::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.72);
 }
 
@@ -739,16 +809,6 @@ button:disabled {
   flex: 0 0 auto;
   min-height: 32px;
   white-space: nowrap;
-}
-
-.icon-only-button {
-  width: 32px;
-  min-height: 32px;
-  padding: 0;
-  color: var(--accent);
-  font-size: 18px;
-  font-weight: 850;
-  line-height: 1;
 }
 
 .launch-item-form {
@@ -1347,15 +1407,10 @@ button:disabled {
   }
 
   .topbar {
-    align-items: flex-start;
-    flex-direction: column;
-    justify-content: center;
-    padding: 10px 14px;
-  }
-
-  .topbar-actions {
-    width: 100%;
-    overflow-x: auto;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0 8px 0 14px;
   }
 
   .workspace {

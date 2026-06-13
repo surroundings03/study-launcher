@@ -81,12 +81,13 @@ export function TaskList({
           <p>Keep the next study steps close to the workflow.</p>
         </div>
         <button
-          className="panel-action icon-only-button"
+          className="panel-action"
           type="button"
           onClick={handleToggleInput}
-          aria-label="Add task"
+          aria-label="Add Task"
         >
           <span aria-hidden="true">+</span>
+          Add Task
         </button>
       </div>
 

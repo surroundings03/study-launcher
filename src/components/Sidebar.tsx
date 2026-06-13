@@ -25,7 +25,6 @@ export function Sidebar({
   onError
 }: SidebarProps) {
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
 
   const handleCreateWorkflow = async (event: FormEvent<HTMLFormElement>) => {
@@ -40,7 +39,7 @@ export function Sidebar({
 
     const workflow = await onCreateWorkflow({
       name: trimmedName,
-      description
+      description: ''
     });
 
     if (!workflow) {
@@ -48,7 +47,6 @@ export function Sidebar({
     }
 
     setName('');
-    setDescription('');
     setIsCreateFormOpen(false);
   };
 
@@ -74,15 +72,6 @@ export function Sidebar({
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Chapter review"
-            />
-          </label>
-          <label className="field">
-            <span>Description</span>
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Notes, resources, and AI tools"
-              rows={3}
             />
           </label>
           <div className="form-actions">

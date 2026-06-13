@@ -58,6 +58,11 @@ declare global {
       ): Promise<Workflow>;
       deleteTask(workflowId: string, taskId: string): Promise<Workflow>;
     };
+    windowControls: {
+      minimize(): Promise<void>;
+      toggleMaximize(): Promise<void>;
+      close(): Promise<void>;
+    };
   }
 }
 

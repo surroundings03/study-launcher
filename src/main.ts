@@ -1,4 +1,5 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import type { IpcMainInvokeEvent } from 'electron';
 import path from 'node:path';
 import { registerWorkflowIpcHandlers } from './main/ipc';
 import { getAppData, settleActiveSession } from './main/store';
@@ -7,6 +8,34 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+const getSenderWindow = (event: IpcMainInvokeEvent) =>
+  BrowserWindow.fromWebContents(event.sender);
+
+const registerWindowControlHandlers = () => {
+  ipcMain.handle('window:minimize', (event) => {
+    getSenderWindow(event)?.minimize();
+  });
+
+  ipcMain.handle('window:toggle-maximize', (event) => {
+    const currentWindow = getSenderWindow(event);
+
+    if (!currentWindow) {
+      return;
+    }
+
+    if (currentWindow.isMaximized()) {
+      currentWindow.unmaximize();
+      return;
+    }
+
+    currentWindow.maximize();
+  });
+
+  ipcMain.handle('window:close', (event) => {
+    getSenderWindow(event)?.close();
+  });
+};
+
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
     title: 'nodeStart',
@@ -14,7 +43,10 @@ const createWindow = () => {
     height: 720,
     minWidth: 1024,
     minHeight: 640,
+    frame: false,
     webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js')
     }
   });
@@ -30,6 +62,7 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   getAppData();
+  registerWindowControlHandlers();
   registerWorkflowIpcHandlers();
   createWindow();
 });
