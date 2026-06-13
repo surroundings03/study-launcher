@@ -1051,6 +1051,164 @@ button:disabled {
   font-size: 12px;
 }
 
+.task-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.task-title-field {
+  min-width: 0;
+}
+
+.task-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: 9px 10px;
+  background: rgba(24, 35, 52, 0.58);
+}
+
+.task-row.completed {
+  background: rgba(10, 17, 28, 0.44);
+}
+
+.task-check {
+  position: relative;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  cursor: pointer;
+}
+
+.task-check input {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.task-check span {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 6px;
+  background: rgba(7, 12, 20, 0.82);
+}
+
+.task-check input:checked + span {
+  border-color: rgba(50, 224, 196, 0.62);
+  background: rgba(50, 224, 196, 0.14);
+}
+
+.task-check input:checked + span::after {
+  width: 8px;
+  height: 4px;
+  border-bottom: 2px solid var(--accent);
+  border-left: 2px solid var(--accent);
+  transform: rotate(-45deg) translate(1px, -1px);
+  content: "";
+}
+
+.task-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 680;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.task-row.completed .task-title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.completion-timeline {
+  display: grid;
+  margin: 0;
+  padding: 2px 0 0;
+  list-style: none;
+}
+
+.completion-row {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  padding-bottom: 14px;
+}
+
+.completion-row:last-child {
+  padding-bottom: 0;
+}
+
+.completion-row:not(:last-child)::before {
+  position: absolute;
+  top: 17px;
+  bottom: -1px;
+  left: 7px;
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(50, 224, 196, 0.18);
+  content: "";
+}
+
+.timeline-marker {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  border: 2px solid rgba(50, 224, 196, 0.72);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--accent) 0 3px, transparent 4px),
+    rgba(7, 12, 20, 0.96);
+  box-shadow: 0 0 12px rgba(50, 224, 196, 0.24);
+}
+
+.completion-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.completion-copy time {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.completion-copy strong {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 720;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .time-stack {
   display: grid;
   gap: 0;
@@ -1267,6 +1425,10 @@ button:disabled {
   }
 
   .launch-item-form {
+    grid-template-columns: 1fr;
+  }
+
+  .task-form {
     grid-template-columns: 1fr;
   }
 

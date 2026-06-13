@@ -1,6 +1,7 @@
 import type {
   AppData,
   CreateLaunchItemInput,
+  CreateTaskInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
   LaunchWorkflowResult,
@@ -49,6 +50,13 @@ declare global {
         workflowId: string,
         launchItemId: string
       ): Promise<Workflow>;
+      addTask(workflowId: string, input: CreateTaskInput): Promise<Workflow>;
+      setTaskCompleted(
+        workflowId: string,
+        taskId: string,
+        completed: boolean
+      ): Promise<Workflow>;
+      deleteTask(workflowId: string, taskId: string): Promise<Workflow>;
     };
   }
 }

@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import type {
   ActiveSession,
   CreateLaunchItemInput,
+  CreateTaskInput,
   LaunchItem,
   LaunchResult,
+  Task,
   UpdateWorkflowInput,
   Workflow
 } from '../shared/types';
@@ -32,9 +34,16 @@ type WorkflowDetailProps = {
   ): Promise<Workflow | null>;
   onDeleteLaunchItem(launchItem: LaunchItem): void;
   onDeleteWorkflow(workflow: Workflow): void;
+  onAddTask(workflowId: string, input: CreateTaskInput): Promise<Workflow | null>;
+  onDeleteTask(workflowId: string, taskId: string): Promise<Workflow | null>;
   onError(message: string): void;
   onLaunchItem(launchItem: LaunchItem): void;
   onReorderLaunchItems(orderedLaunchItemIds: string[]): void;
+  onSetTaskCompleted(
+    workflowId: string,
+    taskId: string,
+    completed: boolean
+  ): Promise<Workflow | null>;
   onStartStudy(): void;
   onStopStudy(): void;
   onUpdateWorkflow(
@@ -57,15 +66,19 @@ export function WorkflowDetail({
   onAddLaunchItem,
   onDeleteLaunchItem,
   onDeleteWorkflow,
+  onAddTask,
+  onDeleteTask,
   onError,
   onLaunchItem,
   onReorderLaunchItems,
+  onSetTaskCompleted,
   onStartStudy,
   onStopStudy,
   onUpdateWorkflow
 }: WorkflowDetailProps) {
   const [isAddItemFormOpen, setIsAddItemFormOpen] = useState(false);
   const [isEditingWorkflow, setIsEditingWorkflow] = useState(false);
+  const tasks: Task[] = Array.isArray(workflow.tasks) ? workflow.tasks : [];
   const isStartDisabled = useMemo(
     () => isLaunching,
     [isLaunching]
@@ -163,8 +176,14 @@ export function WorkflowDetail({
           isWorkflowRunning={isRunning}
           workflow={workflow}
         />
-        <TaskList />
-        <RecentCompletions />
+        <TaskList
+          tasks={tasks}
+          workflowId={workflow.id}
+          onAddTask={onAddTask}
+          onDeleteTask={onDeleteTask}
+          onSetTaskCompleted={onSetTaskCompleted}
+        />
+        <RecentCompletions tasks={tasks} />
       </div>
     </>
   );

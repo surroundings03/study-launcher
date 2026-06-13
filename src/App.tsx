@@ -53,7 +53,9 @@ const getElapsedSeconds = (
 export default function App() {
   const {
     activeSession,
+    addTask,
     applyAppData,
+    deleteTask,
     workflows,
     selectedWorkflow,
     selectedWorkflowId,
@@ -64,7 +66,8 @@ export default function App() {
     updateWorkflow,
     deleteWorkflow,
     replaceWorkflow,
-    setActiveSession
+    setActiveSession,
+    setTaskCompleted
   } = useWorkflows();
   const [launchingWorkflowId, setLaunchingWorkflowId] = useState<string | null>(
     null
@@ -328,11 +331,14 @@ export default function App() {
           onAddLaunchItem={handleAddLaunchItem}
           onDeleteLaunchItem={handleDeleteLaunchItem}
           onDeleteWorkflow={deleteWorkflow}
+          onAddTask={addTask}
+          onDeleteTask={deleteTask}
           onError={setError}
           onLaunchItem={handleLaunchItem}
           onReorderLaunchItems={handleReorderLaunchItems}
           onStartStudy={handleStartStudy}
           onStopStudy={handleStopStudy}
+          onSetTaskCompleted={setTaskCompleted}
           onUpdateWorkflow={updateWorkflow}
         />
       ) : (

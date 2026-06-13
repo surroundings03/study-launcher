@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type {
   ActiveSession,
   AppData,
+  CreateTaskInput,
   CreateWorkflowInput,
   UpdateWorkflowInput,
   Workflow
@@ -134,9 +135,73 @@ export const useWorkflows = () => {
     );
   };
 
+  const addTask = async (
+    workflowId: string,
+    input: CreateTaskInput
+  ): Promise<Workflow | null> => {
+    try {
+      const updatedWorkflow = await window.nodeStart.addTask(
+        workflowId,
+        input
+      );
+
+      replaceWorkflow(updatedWorkflow);
+      setError('');
+
+      return updatedWorkflow;
+    } catch (requestError) {
+      setError(getErrorMessage(requestError) || 'Failed to add task.');
+      return null;
+    }
+  };
+
+  const setTaskCompleted = async (
+    workflowId: string,
+    taskId: string,
+    completed: boolean
+  ): Promise<Workflow | null> => {
+    try {
+      const updatedWorkflow = await window.nodeStart.setTaskCompleted(
+        workflowId,
+        taskId,
+        completed
+      );
+
+      replaceWorkflow(updatedWorkflow);
+      setError('');
+
+      return updatedWorkflow;
+    } catch (requestError) {
+      setError(getErrorMessage(requestError) || 'Failed to update task.');
+      return null;
+    }
+  };
+
+  const deleteTask = async (
+    workflowId: string,
+    taskId: string
+  ): Promise<Workflow | null> => {
+    try {
+      const updatedWorkflow = await window.nodeStart.deleteTask(
+        workflowId,
+        taskId
+      );
+
+      replaceWorkflow(updatedWorkflow);
+      setError('');
+
+      return updatedWorkflow;
+    } catch (requestError) {
+      setError(getErrorMessage(requestError) || 'Failed to delete task.');
+      return null;
+    }
+  };
+
   return {
     activeSession,
+    addTask,
     applyAppData,
+    deleteTask,
     workflows,
     selectedWorkflow,
     selectedWorkflowId,
@@ -147,6 +212,7 @@ export const useWorkflows = () => {
     updateWorkflow,
     deleteWorkflow,
     replaceWorkflow,
-    setActiveSession
+    setActiveSession,
+    setTaskCompleted
   };
 };

@@ -6,6 +6,7 @@ import path from 'node:path';
 import type {
   AppData,
   CreateLaunchItemInput,
+  CreateTaskInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
   LaunchItem,
@@ -13,6 +14,7 @@ import type {
   LaunchWorkflowResult,
   LaunchItemType,
   PickPathResult,
+  Task,
   UpdateWorkflowInput,
   Workflow
 } from '../shared/types';
@@ -282,6 +284,140 @@ const createLaunchItem = (
 
 const findWorkflowIndex = (workflows: Workflow[], workflowId: string): number =>
   workflows.findIndex((workflow) => workflow.id === workflowId);
+
+const getWorkflowTasks = (workflow: Workflow): Task[] =>
+  Array.isArray(workflow.tasks) ? workflow.tasks : [];
+
+const createTask = (input: CreateTaskInput): Task => {
+  const title = typeof input?.title === 'string' ? input.title.trim() : '';
+
+  if (!title) {
+    throw new Error('Task title is required.');
+  }
+
+  return {
+    id: randomUUID(),
+    title,
+    completed: false,
+    createdAt: new Date().toISOString()
+  };
+};
+
+const addTaskToWorkflow = (
+  workflowId: string,
+  input: CreateTaskInput
+): Workflow => {
+  const workflows = getNormalizedWorkflows();
+  const workflowIndex = findWorkflowIndex(workflows, workflowId);
+
+  if (workflowIndex === -1) {
+    throw new Error('Workflow not found.');
+  }
+
+  const workflow = workflows[workflowIndex];
+  const task = createTask(input);
+  const updatedWorkflow: Workflow = {
+    ...workflow,
+    tasks: [...getWorkflowTasks(workflow), task],
+    updatedAt: task.createdAt
+  };
+  const nextWorkflows = [...workflows];
+
+  nextWorkflows[workflowIndex] = updatedWorkflow;
+  saveWorkflows(nextWorkflows);
+
+  return updatedWorkflow;
+};
+
+const setTaskCompletedInWorkflow = (
+  workflowId: string,
+  taskId: string,
+  completed: boolean
+): Workflow => {
+  if (typeof completed !== 'boolean') {
+    throw new Error('Task completed state is invalid.');
+  }
+
+  const workflows = getNormalizedWorkflows();
+  const workflowIndex = findWorkflowIndex(workflows, workflowId);
+
+  if (workflowIndex === -1) {
+    throw new Error('Workflow not found.');
+  }
+
+  const workflow = workflows[workflowIndex];
+  const tasks = getWorkflowTasks(workflow);
+
+  if (!tasks.some((task) => task.id === taskId)) {
+    throw new Error('Task not found.');
+  }
+
+  const now = new Date().toISOString();
+  const updatedTasks = tasks.map((task) => {
+    if (task.id !== taskId) {
+      return task;
+    }
+
+    if (completed) {
+      return {
+        ...task,
+        completed: true,
+        completedAt: now
+      };
+    }
+
+    const { completedAt: _completedAt, ...taskWithoutCompletedAt } = task;
+
+    return {
+      ...taskWithoutCompletedAt,
+      completed: false
+    };
+  });
+  const updatedWorkflow: Workflow = {
+    ...workflow,
+    tasks: updatedTasks,
+    updatedAt: now
+  };
+  const nextWorkflows = [...workflows];
+
+  nextWorkflows[workflowIndex] = updatedWorkflow;
+  saveWorkflows(nextWorkflows);
+
+  return updatedWorkflow;
+};
+
+const deleteTaskFromWorkflow = (
+  workflowId: string,
+  taskId: string
+): Workflow => {
+  const workflows = getNormalizedWorkflows();
+  const workflowIndex = findWorkflowIndex(workflows, workflowId);
+
+  if (workflowIndex === -1) {
+    throw new Error('Workflow not found.');
+  }
+
+  const workflow = workflows[workflowIndex];
+  const tasks = getWorkflowTasks(workflow);
+  const nextTasks = tasks.filter((task) => task.id !== taskId);
+
+  if (nextTasks.length === tasks.length) {
+    throw new Error('Task not found.');
+  }
+
+  const now = new Date().toISOString();
+  const updatedWorkflow: Workflow = {
+    ...workflow,
+    tasks: nextTasks,
+    updatedAt: now
+  };
+  const nextWorkflows = [...workflows];
+
+  nextWorkflows[workflowIndex] = updatedWorkflow;
+  saveWorkflows(nextWorkflows);
+
+  return updatedWorkflow;
+};
 
 const addLaunchItemToWorkflow = (
   workflowId: string,
@@ -718,5 +854,19 @@ export const registerWorkflowIpcHandlers = (): void => {
 
       return updatedWorkflow;
     }
+  );
+
+  handleIpc('tasks:add', (workflowId: string, input: CreateTaskInput) =>
+    addTaskToWorkflow(workflowId, input)
+  );
+
+  handleIpc(
+    'tasks:set-completed',
+    (workflowId: string, taskId: string, completed: boolean) =>
+      setTaskCompletedInWorkflow(workflowId, taskId, completed)
+  );
+
+  handleIpc('tasks:delete', (workflowId: string, taskId: string) =>
+    deleteTaskFromWorkflow(workflowId, taskId)
   );
 };

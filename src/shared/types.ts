@@ -79,6 +79,10 @@ export type CreateLaunchItemInput = {
   target: string;
 };
 
+export type CreateTaskInput = {
+  title: string;
+};
+
 export type PickPathResult =
   | {
       canceled: true;

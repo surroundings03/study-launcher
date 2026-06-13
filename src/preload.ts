@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type {
   CreateLaunchItemInput,
+  CreateTaskInput,
   CreateUrlLaunchItemInput,
   CreateWorkflowInput,
   UpdateWorkflowInput
@@ -40,5 +41,14 @@ contextBridge.exposeInMainWorld('nodeStart', {
   launchUrlLaunchItem: (workflowId: string, launchItemId: string) =>
     ipcRenderer.invoke('launch-items:launch-url', workflowId, launchItemId),
   deleteLaunchItem: (workflowId: string, launchItemId: string) =>
-    ipcRenderer.invoke('launch-items:delete', workflowId, launchItemId)
+    ipcRenderer.invoke('launch-items:delete', workflowId, launchItemId),
+  addTask: (workflowId: string, input: CreateTaskInput) =>
+    ipcRenderer.invoke('tasks:add', workflowId, input),
+  setTaskCompleted: (
+    workflowId: string,
+    taskId: string,
+    completed: boolean
+  ) => ipcRenderer.invoke('tasks:set-completed', workflowId, taskId, completed),
+  deleteTask: (workflowId: string, taskId: string) =>
+    ipcRenderer.invoke('tasks:delete', workflowId, taskId)
 });
