@@ -214,43 +214,19 @@ No. Current versions save data only on the current device.
 
 ### Can I use it on macOS?
 
-The current version is Windows-first. macOS is not a primary tested target.
+Nah.
 
 ### 可以在 macOS 上使用吗？
 
-当前版本 Windows 优先，macOS 不是重点测试目标。
+不可以。
 
 ### Why does Windows show a security warning during installation?
 
 Current Windows builds are not code signed. Windows SmartScreen may show a
 warning during first install or first launch. This does not automatically mean
-the app is unsafe, but users should only run installers from a trusted source.
+the app is unsafe.
 
 ### 为什么安装时 Windows 有安全提示？
 
 当前版本的 Windows 安装包未进行代码签名。首次安装或首次运行时，Windows SmartScreen
-可能显示安全提醒。这不代表程序一定有问题，但用户应确认安装包来源可信后再运行。
-
-## Release Notes / 版本说明
-
-### nodeStart v0.1.0
-
-- Local workflow storage.
-- URL, file, folder, and application launch items.
-- Enable and disable launch items.
-- Drag sorting for launch item order.
-- Sequential launch with failure summary.
-- Single active study session timer.
-- Today and total study time.
-- Simple tasks and recent completions.
-- Frameless desktop window with custom controls.
-
-- 本地工作流存储。
-- URL、文件、文件夹和应用程序启动项。
-- 启用和禁用启动项。
-- 拖拽调整启动项顺序。
-- 按顺序启动并显示失败汇总。
-- 单一 active study session 计时。
-- 今日学习时长和总学习时长。
-- 简单任务和最近完成记录。
-- 无系统标题栏桌面窗口和自定义窗口控制。
+可能显示安全提醒。这不代表程序有问题。
