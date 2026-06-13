@@ -1,3 +1,5 @@
+import { formatTimerDuration } from '../shared/time';
+
 type LaunchButtonProps = {
   enabledLaunchItemCount: number;
   isAnotherWorkflowRunning: boolean;
@@ -6,17 +8,6 @@ type LaunchButtonProps = {
   timerSeconds: number;
   disabled: boolean;
   onStart(): void;
-};
-
-const formatTimer = (durationSeconds: number): string => {
-  const safeSeconds = Math.max(0, Math.floor(durationSeconds));
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const seconds = safeSeconds % 60;
-
-  return [hours, minutes, seconds]
-    .map((value) => value.toString().padStart(2, '0'))
-    .join(':');
 };
 
 export function LaunchButton({
@@ -37,7 +28,7 @@ export function LaunchButton({
         ? 'Blocked'
         : 'Ready';
   const statusCopy = isRunning
-    ? formatTimer(timerSeconds)
+    ? formatTimerDuration(timerSeconds)
     : isLaunching
       ? 'Launching in order'
       : isAnotherWorkflowRunning
