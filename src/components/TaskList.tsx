@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { CreateTaskInput, Task, Workflow } from '../shared/types';
 
@@ -25,8 +25,30 @@ export function TaskList({
   onSetTaskCompleted
 }: TaskListProps) {
   const [title, setTitle] = useState('');
+  const [isInputOpen, setIsInputOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const incompleteTasks = useMemo(
+    () => tasks.filter((task) => !task.completed),
+    [tasks]
+  );
   const trimmedTitle = title.trim();
+
+  useEffect(() => {
+    if (isInputOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isInputOpen]);
+
+  const handleToggleInput = () => {
+    setIsInputOpen((currentValue) => {
+      if (currentValue) {
+        setTitle('');
+      }
+
+      return !currentValue;
+    });
+  };
 
   const handleAddTask = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -44,6 +66,7 @@ export function TaskList({
 
       if (workflow) {
         setTitle('');
+        setIsInputOpen(false);
       }
     } finally {
       setIsSubmitting(false);
@@ -57,43 +80,38 @@ export function TaskList({
           <h2>Tasks</h2>
           <p>Keep the next study steps close to the workflow.</p>
         </div>
+        <button
+          className="panel-action icon-only-button"
+          type="button"
+          onClick={handleToggleInput}
+          aria-label="Add task"
+        >
+          <span aria-hidden="true">+</span>
+        </button>
       </div>
 
-      <form className="task-form" onSubmit={handleAddTask}>
-        <label className="field task-title-field">
-          <span>Task</span>
+      {isInputOpen && (
+        <form className="task-form" onSubmit={handleAddTask}>
           <input
+            ref={inputRef}
+            className="task-input"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Read section notes"
           />
-        </label>
-        <button
-          className="panel-action"
-          type="submit"
-          disabled={!trimmedTitle || isSubmitting}
-        >
-          Add Task
-        </button>
-      </form>
+        </form>
+      )}
 
-      {tasks.length > 0 ? (
+      {incompleteTasks.length > 0 ? (
         <ul className="task-list">
-          {tasks.map((task) => (
-            <li
-              className={task.completed ? 'task-row completed' : 'task-row'}
-              key={task.id}
-            >
+          {incompleteTasks.map((task) => (
+            <li className="task-row" key={task.id}>
               <label className="task-check">
                 <input
                   type="checkbox"
-                  checked={task.completed}
-                  onChange={(event) =>
-                    onSetTaskCompleted(
-                      workflowId,
-                      task.id,
-                      event.target.checked
-                    )
+                  checked={false}
+                  onChange={() =>
+                    onSetTaskCompleted(workflowId, task.id, true)
                   }
                 />
                 <span aria-hidden="true" />
@@ -111,7 +129,7 @@ export function TaskList({
         </ul>
       ) : (
         <div className="empty-state compact">
-          <strong>No tasks yet</strong>
+          <strong>No open tasks</strong>
           <span>Add a task for this workflow.</span>
         </div>
       )}

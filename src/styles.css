@@ -741,6 +741,16 @@ button:disabled {
   white-space: nowrap;
 }
 
+.icon-only-button {
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1;
+}
+
 .launch-item-form {
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   align-items: end;
@@ -1053,13 +1063,20 @@ button:disabled {
 
 .task-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.task-title-field {
+.task-input {
   min-width: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  padding: 9px 10px;
+  color: var(--text-primary);
+  background: rgba(7, 12, 20, 0.82);
+}
+
+.task-input::placeholder {
+  color: rgba(117, 131, 154, 0.78);
 }
 
 .task-list {
