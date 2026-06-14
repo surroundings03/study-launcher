@@ -20,38 +20,16 @@ const formatOrder = (order: number): string => `[${order}]`;
 export function LaunchResultSummary({
   launchResults
 }: LaunchResultSummaryProps) {
-  const openedResults = sortLaunchResultsByOrder(
-    launchResults.filter((result) => result.success)
-  );
   const failedResults = sortLaunchResultsByOrder(
     launchResults.filter((result) => !result.success)
   );
 
-  if (openedResults.length === 0 && failedResults.length === 0) {
+  if (failedResults.length === 0) {
     return null;
   }
 
   return (
     <div className="launch-result-summary" role="status" aria-live="polite">
-      {openedResults.length > 0 && (
-        <section className="launch-result-group opened">
-          <h3>Opened</h3>
-          <ul>
-            {openedResults.map((result) => (
-              <li key={`${result.order}-${result.title}-opened`}>
-                <span className="result-order">
-                  {formatOrder(result.order)}
-                </span>
-                <span className="result-title" title={result.target}>
-                  {result.title}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {failedResults.length > 0 && (
       <section className="launch-result-group failed">
         <h3>Failed</h3>
         <ul>
@@ -68,7 +46,6 @@ export function LaunchResultSummary({
           ))}
         </ul>
       </section>
-      )}
     </div>
   );
 }

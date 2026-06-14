@@ -189,7 +189,7 @@ export default function App() {
 
   const handleStartStudy = async () => {
     if (!selectedWorkflow) {
-      setError('Select a workflow before starting study.');
+      setError('Select a workflow before starting.');
       return;
     }
 
@@ -209,7 +209,7 @@ export default function App() {
           setError('');
         } catch (requestError) {
           setError(
-            getErrorMessage(requestError) || 'Failed to stop study session.'
+            getErrorMessage(requestError) || 'Failed to stop session.'
           );
         }
 
@@ -242,7 +242,7 @@ export default function App() {
       setActiveSession(launchResult.activeSession ?? null);
       setError(launchResult.message ?? '');
     } catch (requestError) {
-      setError(getErrorMessage(requestError) || 'Failed to start study.');
+      setError(getErrorMessage(requestError) || 'Failed to start.');
       setActiveSession(null);
       setLaunchResults([]);
     } finally {
@@ -252,7 +252,7 @@ export default function App() {
 
   const handleStopStudy = async () => {
     if (!selectedWorkflow) {
-      setError('Select a workflow before stopping study.');
+      setError('Select a workflow before stopping.');
       return;
     }
 
@@ -269,7 +269,7 @@ export default function App() {
       applyAppData(appData);
       setError('');
     } catch (requestError) {
-      setError(getErrorMessage(requestError) || 'Failed to stop study.');
+      setError(getErrorMessage(requestError) || 'Failed to stop.');
     }
   };
 

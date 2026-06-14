@@ -145,7 +145,7 @@ export function LaunchItemList({
     return (
       <div className="empty-state">
         <strong>No launch items yet</strong>
-        <span>Add a URL item to define the study start order.</span>
+        <span>Add a URL item to define the start order.</span>
       </div>
     );
   }

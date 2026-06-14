@@ -78,7 +78,7 @@ export function TaskList({
       <div className="panel-header">
         <div>
           <h2>Tasks</h2>
-          <p>Keep the next study steps close to the workflow.</p>
+          <p>Keep the next steps close to the workflow.</p>
         </div>
         <button
           className="panel-action"

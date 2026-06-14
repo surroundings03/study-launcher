@@ -143,7 +143,7 @@ export function Sidebar({
         ) : (
           <div className="empty-state compact">
             <strong>No workflows yet</strong>
-            <span>Create your first study workflow.</span>
+            <span>Create your first workflow.</span>
           </div>
         )}
       </div>

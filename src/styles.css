@@ -748,8 +748,9 @@ button:disabled {
 
 .run-status {
   display: grid;
-  flex: 0 1 226px;
-  min-width: 152px;
+  width: 252px;
+  min-width: 252px;
+  flex: 0 0 252px;
   grid-template-columns: minmax(0, 1fr) 10px;
   align-items: center;
   gap: 5px 12px;
@@ -768,6 +769,7 @@ button:disabled {
   grid-column: 1 / 2;
   color: var(--text-secondary);
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .status-dot {
@@ -1357,8 +1359,10 @@ button:disabled {
 }
 
 .empty-state {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
   gap: 6px;
   min-height: 118px;
   border: 1px dashed rgba(148, 163, 184, 0.22);
@@ -1382,6 +1386,13 @@ button:disabled {
 .empty-state.compact {
   min-height: 96px;
   padding: 14px;
+}
+
+.launch-panel > .empty-state,
+.tasks-panel > .empty-state,
+.completions-panel > .empty-state {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .no-workflow {
@@ -1416,8 +1427,9 @@ button:disabled {
   }
 
   .run-status {
-    flex-basis: 132px;
-    min-width: 132px;
+    width: 188px;
+    min-width: 188px;
+    flex-basis: 188px;
     padding: 10px 12px;
   }
 
@@ -1520,8 +1532,9 @@ button:disabled {
   }
 
   .run-status {
-    flex-basis: 122px;
-    min-width: 122px;
+    width: 166px;
+    min-width: 166px;
+    flex-basis: 166px;
     gap: 4px 8px;
     padding: 9px 10px;
   }

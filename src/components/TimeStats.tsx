@@ -49,7 +49,7 @@ export function TimeStats({
     <section className="panel study-panel">
       <div className="panel-header">
         <div>
-          <h2>Study Time</h2>
+          <h2>Time</h2>
           <p>{currentCopy}</p>
         </div>
       </div>
