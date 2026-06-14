@@ -10,14 +10,14 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    name: 'nodeStart',
-    executableName: 'nodeStart'
+    name: 'Study Launcher',
+    executableName: 'StudyLauncher'
   },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({
-      name: 'nodeStart',
-      setupExe: 'nodeStartSetup.exe'
+      name: 'StudyLauncher',
+      setupExe: 'StudyLauncherSetup.exe'
     }),
     new MakerZIP({}, ['darwin']),
     new MakerRpm({}),

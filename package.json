@@ -1,8 +1,8 @@
 {
-  "name": "nodestart",
-  "productName": "nodeStart",
-  "version": "1.0.0",
-  "description": "A minimal Electron Forge app.",
+  "name": "study-launcher",
+  "productName": "Study Launcher",
+  "version": "0.1.0",
+  "description": "A Windows-first local study workflow launcher.",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
@@ -12,7 +12,7 @@
     "publish": "electron-forge publish"
   },
   "keywords": [],
-  "author": "",
+  "author": "Study Launcher contributors",
   "license": "MIT",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",

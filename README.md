@@ -1,76 +1,46 @@
-# nodeStart
+# Study Launcher
 
-## Overview / 项目简介
+Study Launcher is a Windows-first desktop app for starting a local study
+workflow. Create a workflow, add the URLs, files, folders, and Windows apps you
+usually need, arrange them in order, then open the enabled items with one
+button.
 
-nodeStart is a Windows-first local study workflow launcher built with Electron,
-TypeScript, and React. It helps you configure web pages, files, folders, and
-desktop applications for different study scenarios, then open enabled resources
-in order while tracking study time and task completion.
+The app is built with Electron, TypeScript, React, Vite, Electron Forge, and
+electron-store.
 
-nodeStart 是一个 Windows 优先的本地学习工作流启动器，使用 Electron、
-TypeScript 和 React 构建。它可以为不同学习场景配置网页、文件、文件夹和桌面应用，
-并按顺序打开已启用的资源，同时记录学习时长和任务完成情况。
+## Features
 
-Typical use cases include math review, programming labs, English writing,
-paper reading, course preparation, and any workflow where the same resources
-need to be opened repeatedly.
+- Dark study workspace UI
+- Workflow creation, editing, selection, and deletion
+- URL, file, folder, and Windows application launch items
+- Per-item enable and disable toggle
+- Visible launch item ordering
+- Drag-and-drop launch item sorting
+- Ordered launch execution
+- Failure summary for launch items that could not be opened
+- Single active study timer
+- Today and total study time
+- Simple task list
+- Recent completed tasks
+- Local data storage
 
-适用场景包括高数复习、编程实验、英语写作、资料阅读、课程准备，以及任何需要反复打开同一组资源的学习流程。
+## Install
 
-Current status: first usable version, v0.1.0 in development.
+Download the Windows installer from the GitHub Releases page and run it.
 
-当前状态：第一个可用版本，v0.1.0 开发中。
+The Windows installer is currently unsigned. Windows SmartScreen or antivirus
+software may show a warning during installation or first launch. Only run
+installers downloaded from a release source you trust.
 
-## Features / 功能
-
-- Create, edit, select, and delete workflows.
-- Add launch items for URLs, files, folders, and Windows applications.
-- Enable or disable individual launch items.
-- Drag launch items to adjust their order.
-- Start enabled launch items in the order shown in the list.
-- Continue launching later items even if one item fails.
-- Show a launch result summary after starting a workflow.
-- Track one active study session at a time.
-- Show today's study time and total study time.
-- Manage a simple task list for the selected workflow.
-- Show recent task completions.
-- Save workflow data locally on the current device.
-
-- 创建、编辑、选择和删除工作流。
-- 添加 URL、文件、文件夹和 Windows 应用程序启动项。
-- 启用或禁用单个启动项。
-- 通过拖拽调整启动项顺序。
-- 按列表显示顺序打开已启用的启动项。
-- 某个启动项失败时，后续启动项仍会继续打开。
-- Start 后显示启动结果汇总。
-- 同一时间只记录一个 active study session。
-- 显示今日学习时长和总学习时长。
-- 为当前工作流管理简单任务列表。
-- 显示最近完成记录。
-- 工作流数据只保存在当前设备本地。
-
-## Tech Stack / 技术栈
-
-- Electron
-- Electron Forge
-- TypeScript
-- React
-- Vite
-- electron-store
-
-## Getting Started / 本地运行
+## Local Development
 
 Install dependencies:
-
-安装依赖：
 
 ```bash
 npm install
 ```
 
-Start the desktop app in development mode:
-
-以开发模式启动桌面应用：
+Run the app in development mode:
 
 ```bash
 npm start
@@ -78,155 +48,96 @@ npm start
 
 Run the TypeScript check:
 
-运行 TypeScript 检查：
-
 ```bash
 npx tsc --noEmit
 ```
 
-## Build / 打包
+## Packaging
 
 Create distributable packages with Electron Forge:
-
-使用 Electron Forge 生成分发产物：
 
 ```bash
 npm run make
 ```
 
-Build output is generated in the `out/` directory. The exact package formats
-depend on the makers configured in `forge.config.ts`.
+Build output is generated in `out/`. Do not commit `out/` or generated
+installer files to the repository.
 
-打包产物会生成在 `out/` 目录中，具体格式取决于 `forge.config.ts` 中配置的 maker。
+## Usage
 
-## Usage / 使用流程
-
-1. Create a workflow, such as `Math Review`.
-2. Add launch items, such as ChatGPT, a PDF handout, a course folder, or VS Code.
+1. Create a workflow, for example `Exam Review`.
+2. Add launch items such as:
+   - `https://example.com/course`
+   - `C:\Path\To\File.pdf`
+   - `D:\Study\Course\Chapter1`
+   - `C:\Path\To\App.exe`
 3. Drag launch items into the order you want.
-4. Disable any item that should not open this time.
+4. Disable items that should not open this time.
 5. Click `Start`.
-6. nodeStart opens enabled launch items in the displayed order.
-7. Click `Stop` when the study session is over.
-8. The session duration is saved to the current workflow.
+6. Enabled launch items open in the list order, from top to bottom.
+7. If one item fails, later enabled items still continue.
+8. Click `Stop` when the session is over.
 
-1. 创建一个工作流，例如“高数复习”。
-2. 添加启动项，例如 ChatGPT、课件 PDF、课程文件夹或 VS Code。
-3. 将启动项拖拽到需要的顺序。
-4. 禁用本次不需要打开的启动项。
-5. 点击 `Start`。
-6. nodeStart 会按显示顺序打开已启用的启动项。
-7. 学习结束后点击 `Stop`。
-8. 本次学习时长会保存到当前工作流。
+If every launch item fails to open, the timer does not start. If at least one
+launch item opens successfully, the timer starts.
 
-Important behavior:
+## Data Storage and Privacy
 
-重要行为：
+Study Launcher stores data only on the current computer.
 
-- Launch items are opened in the same order shown in the list.
-- Disabled launch items are skipped.
-- If one launch item fails, later enabled launch items still continue.
-- Only one workflow can have an active study session at a time.
+- Data is saved locally with `electron-store`.
+- Data is not uploaded to the cloud.
+- There is no account system.
+- There is no backend service.
+- There is no cloud sync.
+- Workflows, launch items, tasks, and session history stay on the device where
+  they were created.
 
-- 启动项会按列表中的显示顺序依次打开。
-- disabled 的启动项不会被打开。
-- 某个启动项失败时，不会阻止后面的 enabled 启动项继续打开。
-- 同一时间只能有一个工作流处于学习计时状态。
+Local file, folder, and application launch items store local paths. If a file,
+folder, or app is moved, renamed, deleted, or becomes inaccessible, the saved
+path stops working and the launch item must be updated manually.
 
-## Data Storage / 数据保存
+## Import and Export
 
-nodeStart currently uses local storage only. Workflows, launch items, tasks, and
-study records are saved on the current computer. Data is not uploaded to the
-cloud, and there is no account system or multi-device sync.
+Study Launcher v0.1.0 does not include in-app import or export controls.
 
-nodeStart 当前版本只使用本地存储。工作流、启动项、任务和学习记录只保存在当前电脑中，
-不会上传到云端，也没有账号系统或多设备同步。
+If you manually share, back up, or import JSON data in the future, check all
+paths and links before using it. A JSON file from another person may contain
+paths that do not exist on your computer, private local paths, or links you do
+not want to open.
 
-Local files, folders, and applications are stored as local paths. If a file,
-folder, or application is moved, deleted, or renamed, the saved launch item path
-may stop working and should be selected again.
+## FAQ
 
-文件、文件夹和应用程序会以本地路径形式保存。如果文件、文件夹或应用程序被移动、删除或重命名，
-原启动项路径可能失效，需要重新选择。
+### Why did a file, folder, or app fail to open?
 
-## Security and Privacy / 安全与隐私
+The saved path may no longer exist, or the item may be inaccessible. Update the
+launch item with the current path.
 
-- nodeStart does not collect user data.
-- nodeStart does not upload workflow data.
-- There is no account login or cloud sync.
-- Opening local files, folders, and applications is handled by the Electron main process.
-- The renderer does not directly access Node.js system APIs such as `fs`, `path`, or `shell`.
+### Why did a URL fail to open?
 
-- nodeStart 不收集用户数据。
-- nodeStart 不上传工作流数据。
-- 当前版本没有账号登录或云同步。
-- 打开本地文件、文件夹和应用程序由 Electron main process 执行。
-- renderer 不直接访问 `fs`、`path`、`shell` 等 Node.js 系统能力。
+Only `http` and `https` URLs are supported. Check that the link is valid.
 
-## Limitations / 当前限制
+### Why did one disabled item not open?
 
-Current versions do not support:
+Disabled launch items are skipped when you click `Start`. You can still open an
+item manually with its `Open` button.
 
-当前版本暂不支持：
+### Does Study Launcher upload my data?
 
-- Account system.
-- Cloud sync.
-- Multi-device sync.
-- Mobile app.
-- Complex analytics charts.
-- Pomodoro timer.
-- Import/export.
+No. Data stays on your local computer. The app has no account system, cloud
+sync, or backend service.
 
-- 账号系统。
-- 云同步。
-- 多设备同步。
-- 移动端。
-- 复杂统计图表。
-- 番茄钟。
-- 导入导出。
+### Can I use the same data on another computer?
 
-## FAQ / 常见问题
+There is no built-in sync in v0.1.0. If data is moved manually in the future,
+check all paths and links before opening them on another computer.
 
-### Why does a file fail to open?
+### Why does Windows show a security warning?
 
-The file may have been moved, deleted, renamed, or made inaccessible. Select the
-file again and update the launch item.
+The v0.1.0 Windows installer is unsigned. Windows may show a security warning
+for unsigned apps. This does not automatically mean the app is unsafe, but users
+should only run installers from a trusted release source.
 
-### 为什么文件打不开？
+## License
 
-文件可能已被移动、删除、重命名，或当前无法访问。请重新选择文件并更新启动项。
-
-### Why was a launch item not opened?
-
-The item may be disabled, or its path or URL may be invalid.
-
-### 为什么启动项没有被打开？
-
-该启动项可能被 disabled，或者路径 / URL 无效。
-
-### Does data sync to the cloud?
-
-No. Current versions save data only on the current device.
-
-### 数据会同步到云端吗？
-
-不会。当前版本只保存在本机。
-
-### Can I use it on macOS?
-
-Nah.
-
-### 可以在 macOS 上使用吗？
-
-不可以。
-
-### Why does Windows show a security warning during installation?
-
-Current Windows builds are not code signed. Windows SmartScreen may show a
-warning during first install or first launch. This does not automatically mean
-the app is unsafe.
-
-### 为什么安装时 Windows 有安全提示？
-
-当前版本的 Windows 安装包未进行代码签名。首次安装或首次运行时，Windows SmartScreen
-可能显示安全提醒。这不代表程序有问题。
+Study Launcher is released under the MIT License. See [LICENSE](LICENSE).

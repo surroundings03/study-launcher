@@ -74,13 +74,15 @@ web_modules/
 .cache
 .parcel-cache
 
-# Next.js build output
+# Next.js / Electron build output
 .next
 out
+out/
 
 # Nuxt.js build / generate output
 .nuxt
 dist
+dist/
 .output
 
 # Gatsby files
@@ -144,3 +146,6 @@ vite.config.ts.timestamp-*
 
 # macOS
 .DS_Store
+
+# Windows
+Thumbs.db
