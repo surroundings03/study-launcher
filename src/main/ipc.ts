@@ -542,11 +542,51 @@ const reorderLaunchItemsInWorkflow = (
   return updatedWorkflow;
 };
 
-const openLaunchItem = async (item: LaunchItem): Promise<void> => {
-  if (!item.enabled) {
-    throw new Error('Launch item is disabled.');
+const setLaunchItemEnabledInWorkflow = (
+  workflowId: string,
+  launchItemId: string,
+  enabled: boolean
+): Workflow => {
+  if (typeof enabled !== 'boolean') {
+    throw new Error('Launch item enabled state is invalid.');
   }
 
+  const workflows = getNormalizedWorkflows();
+  const workflowIndex = findWorkflowIndex(workflows, workflowId);
+
+  if (workflowIndex === -1) {
+    throw new Error('Workflow not found.');
+  }
+
+  const workflow = workflows[workflowIndex];
+
+  if (!workflow.items.some((item) => item.id === launchItemId)) {
+    throw new Error('Launch item not found.');
+  }
+
+  const now = new Date().toISOString();
+  const updatedWorkflow: Workflow = {
+    ...workflow,
+    items: workflow.items.map((item) =>
+      item.id === launchItemId
+        ? {
+            ...item,
+            enabled,
+            updatedAt: now
+          }
+        : item
+    ),
+    updatedAt: now
+  };
+  const nextWorkflows = [...workflows];
+  nextWorkflows[workflowIndex] = updatedWorkflow;
+
+  saveWorkflows(nextWorkflows);
+
+  return updatedWorkflow;
+};
+
+const openLaunchItem = async (item: LaunchItem): Promise<void> => {
   if (item.type === 'url') {
     try {
       await shell.openExternal(parseHttpUrl(item.target));
@@ -807,6 +847,12 @@ export const registerWorkflowIpcHandlers = (): void => {
     'launch-items:reorder',
     (workflowId: string, orderedLaunchItemIds: string[]) =>
       reorderLaunchItemsInWorkflow(workflowId, orderedLaunchItemIds)
+  );
+
+  handleIpc(
+    'launch-items:set-enabled',
+    (workflowId: string, launchItemId: string, enabled: boolean) =>
+      setLaunchItemEnabledInWorkflow(workflowId, launchItemId, enabled)
   );
 
   handleIpc(

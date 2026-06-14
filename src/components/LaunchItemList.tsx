@@ -8,6 +8,7 @@ type LaunchItemListProps = {
   onDeleteLaunchItem(launchItem: LaunchItem): void;
   onLaunchItem(launchItem: LaunchItem): void;
   onReorderLaunchItems(orderedLaunchItemIds: string[]): void;
+  onSetLaunchItemEnabled(launchItem: LaunchItem, enabled: boolean): void;
 };
 
 const formatOrder = (index: number): string => `[${index + 1}]`;
@@ -61,7 +62,8 @@ export function LaunchItemList({
   launchItems,
   onDeleteLaunchItem,
   onLaunchItem,
-  onReorderLaunchItems
+  onReorderLaunchItems,
+  onSetLaunchItemEnabled
 }: LaunchItemListProps) {
   const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
   const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
@@ -196,23 +198,29 @@ export function LaunchItemList({
               </span>
             </div>
             <div className="launch-actions">
-              <span
+              <button
                 className={
                   launchItem.enabled
                     ? 'toggle-indicator on'
                     : 'toggle-indicator'
                 }
+                type="button"
                 role="switch"
                 aria-checked={launchItem.enabled}
-                aria-disabled="true"
-                title="Enable state is read-only in this phase."
+                title={
+                  launchItem.enabled
+                    ? 'Disable launch item'
+                    : 'Enable launch item'
+                }
+                onClick={() =>
+                  onSetLaunchItemEnabled(launchItem, !launchItem.enabled)
+                }
               >
                 <span aria-hidden="true" />
-              </span>
+              </button>
               <button
                 className="secondary-button"
                 type="button"
-                disabled={!launchItem.enabled}
                 onClick={() => onLaunchItem(launchItem)}
               >
                 Open

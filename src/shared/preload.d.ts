@@ -42,6 +42,11 @@ declare global {
         workflowId: string,
         orderedLaunchItemIds: string[]
       ): Promise<Workflow>;
+      setLaunchItemEnabled(
+        workflowId: string,
+        launchItemId: string,
+        enabled: boolean
+      ): Promise<Workflow>;
       launchUrlLaunchItem(
         workflowId: string,
         launchItemId: string

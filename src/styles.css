@@ -954,7 +954,14 @@ button:disabled {
 }
 
 .launch-row.disabled {
-  opacity: 0.72;
+  border-color: rgba(100, 116, 139, 0.16);
+  background: rgba(13, 20, 31, 0.58);
+  opacity: 0.86;
+}
+
+.launch-row.disabled:hover {
+  border-color: rgba(100, 116, 139, 0.24);
+  background: rgba(18, 26, 38, 0.66);
 }
 
 .launch-row.dragging {
@@ -1075,6 +1082,25 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+.launch-row.disabled .drag-handle,
+.launch-row.disabled .order-badge {
+  color: rgba(117, 131, 154, 0.58);
+}
+
+.launch-row.disabled .launch-title-line strong {
+  color: rgba(183, 194, 209, 0.58);
+}
+
+.launch-row.disabled .launch-target {
+  color: rgba(117, 131, 154, 0.62);
+}
+
+.launch-row.disabled .type-badge {
+  border-color: rgba(100, 116, 139, 0.22);
+  color: rgba(148, 163, 184, 0.72);
+  background: rgba(100, 116, 139, 0.08);
+}
+
 .launch-actions {
   flex: 0 0 auto;
   gap: 8px;
@@ -1092,7 +1118,11 @@ button:disabled {
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
   padding: 2px;
-  background: rgba(7, 12, 20, 0.9);
+  background: rgba(38, 48, 63, 0.92);
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease;
 }
 
 .toggle-indicator span {

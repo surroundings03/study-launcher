@@ -38,6 +38,17 @@ contextBridge.exposeInMainWorld('nodeStart', {
       workflowId,
       orderedLaunchItemIds
     ),
+  setLaunchItemEnabled: (
+    workflowId: string,
+    launchItemId: string,
+    enabled: boolean
+  ) =>
+    ipcRenderer.invoke(
+      'launch-items:set-enabled',
+      workflowId,
+      launchItemId,
+      enabled
+    ),
   launchUrlLaunchItem: (workflowId: string, launchItemId: string) =>
     ipcRenderer.invoke('launch-items:launch-url', workflowId, launchItemId),
   deleteLaunchItem: (workflowId: string, launchItemId: string) =>

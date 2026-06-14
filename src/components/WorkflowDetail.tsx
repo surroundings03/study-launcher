@@ -39,6 +39,7 @@ type WorkflowDetailProps = {
   onError(message: string): void;
   onLaunchItem(launchItem: LaunchItem): void;
   onReorderLaunchItems(orderedLaunchItemIds: string[]): void;
+  onSetLaunchItemEnabled(launchItem: LaunchItem, enabled: boolean): void;
   onSetTaskCompleted(
     workflowId: string,
     taskId: string,
@@ -71,6 +72,7 @@ export function WorkflowDetail({
   onError,
   onLaunchItem,
   onReorderLaunchItems,
+  onSetLaunchItemEnabled,
   onSetTaskCompleted,
   onStartStudy,
   onStopStudy,
@@ -164,6 +166,7 @@ export function WorkflowDetail({
             onDeleteLaunchItem={onDeleteLaunchItem}
             onLaunchItem={onLaunchItem}
             onReorderLaunchItems={onReorderLaunchItems}
+            onSetLaunchItemEnabled={onSetLaunchItemEnabled}
           />
 
           <LaunchResultSummary launchResults={launchResults} />

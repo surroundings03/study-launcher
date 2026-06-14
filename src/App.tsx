@@ -162,6 +162,31 @@ export default function App() {
     }
   };
 
+  const handleSetLaunchItemEnabled = async (
+    launchItem: LaunchItem,
+    enabled: boolean
+  ) => {
+    if (!selectedWorkflow) {
+      setError('Select a workflow before updating an item.');
+      return;
+    }
+
+    try {
+      const updatedWorkflow = await window.nodeStart.setLaunchItemEnabled(
+        selectedWorkflow.id,
+        launchItem.id,
+        enabled
+      );
+
+      replaceWorkflow(updatedWorkflow);
+      setError('');
+    } catch (requestError) {
+      setError(
+        getErrorMessage(requestError) || 'Failed to update launch item.'
+      );
+    }
+  };
+
   const handleStartStudy = async () => {
     if (!selectedWorkflow) {
       setError('Select a workflow before starting study.');
@@ -336,6 +361,7 @@ export default function App() {
           onError={setError}
           onLaunchItem={handleLaunchItem}
           onReorderLaunchItems={handleReorderLaunchItems}
+          onSetLaunchItemEnabled={handleSetLaunchItemEnabled}
           onStartStudy={handleStartStudy}
           onStopStudy={handleStopStudy}
           onSetTaskCompleted={setTaskCompleted}
