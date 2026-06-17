@@ -1,10 +1,11 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import type { IpcMainInvokeEvent } from 'electron';
+import squirrelStartup from 'electron-squirrel-startup';
 import path from 'node:path';
 import { registerWorkflowIpcHandlers } from './main/ipc';
 import { getAppData, settleActiveSession } from './main/store';
 
-if (require('electron-squirrel-startup')) {
+if (squirrelStartup) {
   app.quit();
 }
 
